@@ -47,18 +47,23 @@ const FEATURE_CARDS = [
 const HOW_IT_WORKS_STEPS = [
   {
     number: "01",
-    title: "Apply",
-    body: "Submit your details. Car, Instagram, how you heard about us. Takes 2 minutes.",
+    title: "Get Pre-Approved",
+    body: "Submit your application. Car, Instagram, how you found us. Every submission is reviewed personally within 48 hours.",
   },
   {
     number: "02",
-    title: "Get Reviewed",
-    body: "Every application is read personally. Not an algorithm. Not a form filter. If you're a fit, you'll hear back within 48 hours.",
+    title: "Complete Your Application",
+    body: "Once pre-approved, you'll receive a full application to fill out. This is where we get to know you.",
   },
   {
     number: "03",
-    title: "Experience",
-    body: "Attend your first event. Meet the members. See if the energy is right. That's where it starts.",
+    title: "Sign & Pay",
+    body: "Review and sign the membership agreement. Pay your dues. You're officially in the network.",
+  },
+  {
+    number: "04",
+    title: "Attend an Experience",
+    body: "Your first event is within 30 days. Show up, meet the members, feel the energy. That's where it starts.",
   },
 ] as const
 
@@ -250,11 +255,11 @@ export default function Home() {
             THE PROCESS
           </p>
           <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
-            Three Steps. That&apos;s It.
+            Four Steps. That&apos;s It.
           </h2>
         </SectionReveal>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
           {HOW_IT_WORKS_STEPS.map((step, i) => (
             <SectionReveal key={step.number} delay={i * 0.15}>
               <TiltCard>
