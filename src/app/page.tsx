@@ -54,8 +54,8 @@ export default function Home() {
           </div>
 
           {/* Title */}
-          <div className="mt-8 h-[120px] w-full max-w-3xl sm:h-[140px] md:h-[160px]">
-            <TextHoverEffect text="TOP TIER MIAMI CLUB" />
+          <div className="mt-8 h-[160px] w-full max-w-4xl sm:h-[200px] md:h-[240px]">
+            <TextHoverEffect textLines={["TOP TIER", "MIAMI CLUB"]} />
           </div>
 
           {/* Subtitle */}

@@ -41,7 +41,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col overflow-x-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
         <LenisProvider>
-          <NoiseOverlay />
+          {/* <NoiseOverlay /> */}
           <CursorGlow />
           <ScrollProgress />
           <Nav />
