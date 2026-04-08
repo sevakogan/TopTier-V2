@@ -13,6 +13,17 @@ import { GridBeams } from "@/components/grid-beams"
 import { SectionReveal } from "@/components/section-reveal"
 import { TiltCard } from "@/components/tilt-card"
 
+const PARTNER_NAMES = [
+  "MPH CLUB",
+  "1OF1 MOTORSPORTS",
+  "SHIFT ARCADE",
+  "PALM CAR RESERVE",
+  "COLLECTION SUITES",
+  "TITAN CHEMICALS",
+  "XZOTICA MIAMI",
+  "ALPHA EXOTICS",
+] as const
+
 const MARQUEE_ITEMS = [
   "NIGHT RUNS",
   "VENUE TAKEOVERS",
@@ -27,6 +38,42 @@ const FEATURE_CARDS = [
   { icon: "\u25C6", label: "PRIVATE", sub: "Venues you won't find on Google" },
   { icon: "\u2B21", label: "CONNECTED", sub: "Intros that change trajectories" },
   { icon: "\u25CE", label: "AUTOMOTIVE", sub: "200+ cars. Zero posers." },
+] as const
+
+const HOW_IT_WORKS_STEPS = [
+  {
+    number: "01",
+    title: "Apply",
+    body: "Submit your details. Car, Instagram, how you heard about us. Takes 2 minutes.",
+  },
+  {
+    number: "02",
+    title: "Get Reviewed",
+    body: "Every application is read personally. Not an algorithm. Not a form filter. If you're a fit, you'll hear back within 48 hours.",
+  },
+  {
+    number: "03",
+    title: "Experience",
+    body: "Attend your first event. Meet the members. See if the energy is right. That's where it starts.",
+  },
+] as const
+
+const TESTIMONIALS = [
+  {
+    quote: "Midnight run through Key Biscayne. 20 cars. That dinner afterward changed my business.",
+    name: "Marco T.",
+    car: "992 GT3",
+  },
+  {
+    quote: "I've been to car meets. This is not that. The people here actually move different.",
+    name: "Alex R.",
+    car: "McLaren 720S",
+  },
+  {
+    quote: "Applied on a Tuesday, heard back Thursday. First event was the Shift Arcade takeover. Haven't missed one since.",
+    name: "Diana K.",
+    car: "Range Rover SV",
+  },
 ] as const
 
 export default function Home() {
@@ -59,7 +106,10 @@ export default function Home() {
           </div>
 
           {/* Subtitle */}
-          <div className="mt-10 max-w-lg font-cormorant text-xl italic leading-relaxed text-[rgba(245,245,240,0.6)] sm:text-2xl">
+          <div
+            className="mt-10 max-w-lg font-cormorant text-xl italic leading-relaxed text-[rgba(245,245,240,0.75)] sm:text-2xl"
+            style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}
+          >
             <p>The convoy is the experience.</p>
             <p>The dinner is the connection.</p>
           </div>
@@ -91,7 +141,24 @@ export default function Home() {
       {/* ── Section 2: Beam Divider ── */}
       <BeamDivider variant="default" />
 
-      {/* ── Section 3: Marquee Strip ── */}
+      {/* ── Section 3: Partner Logos Marquee ── */}
+      <div className="border-y border-[rgba(255,255,255,0.04)] py-6">
+        <p className="mb-3 text-center text-[8px] tracking-[5px] text-[rgba(201,168,76,0.3)]">
+          ECOSYSTEM PARTNERS
+        </p>
+        <Marquee pauseOnHover>
+          {PARTNER_NAMES.map((name) => (
+            <span
+              key={name}
+              className="mx-8 text-[11px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.25)]"
+            >
+              {name}
+            </span>
+          ))}
+        </Marquee>
+      </div>
+
+      {/* ── Section 4: Marquee Strip ── */}
       <div className="border-y border-[rgba(201,168,76,0.08)] py-5">
         <Marquee pauseOnHover>
           {MARQUEE_ITEMS.map((item) => (
@@ -158,7 +225,87 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Section 5: Beam Divider Alt ── */}
+      {/* ── Mid-page CTA ── */}
+      <div className="py-12 text-center">
+        <Link href="/apply">
+          <ShimmerButton
+            shimmerColor="#C9A84C"
+            background="rgba(201,168,76,0.12)"
+            className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
+          >
+            APPLY FOR MEMBERSHIP &rarr;
+          </ShimmerButton>
+        </Link>
+      </div>
+
+      {/* ── How It Works ── */}
+      <section className="mx-auto max-w-4xl px-6 py-24">
+        <SectionReveal>
+          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+            THE PROCESS
+          </p>
+          <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
+            Three Steps. That&apos;s It.
+          </h2>
+        </SectionReveal>
+
+        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+          {HOW_IT_WORKS_STEPS.map((step, i) => (
+            <SectionReveal key={step.number} delay={i * 0.15}>
+              <TiltCard>
+                <div className="rounded-xl border border-[rgba(255,255,255,0.05)] p-6">
+                  <p className="font-cormorant text-5xl font-bold text-[#C9A84C] opacity-30">
+                    {step.number}
+                  </p>
+                  <p className="mt-2 font-cormorant text-xl font-semibold">
+                    {step.title}
+                  </p>
+                  <p className="mt-2 text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
+                    {step.body}
+                  </p>
+                </div>
+              </TiltCard>
+            </SectionReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section className="mx-auto max-w-4xl px-6 py-24">
+        <SectionReveal>
+          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+            MEMBER VOICES
+          </p>
+          <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
+            From the Network
+          </h2>
+        </SectionReveal>
+
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
+          {TESTIMONIALS.map((t, i) => (
+            <SectionReveal key={t.name} delay={i * 0.15}>
+              <TiltCard>
+                <div className="flex flex-col rounded-xl border border-[rgba(255,255,255,0.05)] p-6">
+                  <p className="mb-2 font-cormorant text-3xl leading-none text-[#C9A84C]">
+                    &#10077;
+                  </p>
+                  <p className="font-cormorant text-[15px] italic leading-relaxed text-[rgba(245,245,240,0.55)]">
+                    {t.quote}
+                  </p>
+                  <p className="mt-auto pt-4 text-[13px] font-semibold text-[#F5F5F0]">
+                    {t.name}
+                  </p>
+                  <p className="text-[11px] tracking-[1px] text-[rgba(201,168,76,0.6)]">
+                    {t.car}
+                  </p>
+                </div>
+              </TiltCard>
+            </SectionReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Beam Divider Alt ── */}
       <BeamDivider variant="alt" />
 
       {/* ── Section 6: Bottom CTA ── */}
