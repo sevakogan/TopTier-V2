@@ -13,6 +13,7 @@ import { BeamPath } from "@/components/beam-path"
 import { GridBeams } from "@/components/grid-beams"
 import { SectionReveal } from "@/components/section-reveal"
 import { TiltCard } from "@/components/tilt-card"
+import { AnimatedTestimonials } from "@/components/ui/animated-testimonials"
 
 const PARTNER_NAMES = [
   "MPH CLUB",
@@ -64,19 +65,22 @@ const TESTIMONIALS = [
   {
     quote: "Midnight run through Key Biscayne. 20 cars. That dinner afterward changed my business.",
     name: "Marco T.",
-    car: "992 GT3",
+    designation: "992 GT3",
+    src: "/images/porsche-911-turbo.jpg",
   },
   {
     quote: "I've been to car meets. This is not that. The people here actually move different.",
     name: "Alex R.",
-    car: "McLaren 720S",
+    designation: "McLaren 720S",
+    src: "/images/mclaren-720s.jpg",
   },
   {
     quote: "Applied on a Tuesday, heard back Thursday. First event was the Shift Arcade takeover. Haven't missed one since.",
     name: "Diana K.",
-    car: "Range Rover SV",
+    designation: "Range Rover SV",
+    src: "/images/lamborghini-huracan.jpg",
   },
-] as const
+]
 
 export default function Home() {
   return (
@@ -271,7 +275,7 @@ export default function Home() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="mx-auto max-w-4xl px-6 py-24">
+      <section className="mx-auto max-w-5xl px-6 py-24">
         <SectionReveal>
           <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
             MEMBER VOICES
@@ -281,28 +285,7 @@ export default function Home() {
           </h2>
         </SectionReveal>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {TESTIMONIALS.map((t, i) => (
-            <SectionReveal key={t.name} delay={i * 0.15}>
-              <TiltCard>
-                <div className="flex flex-col rounded-xl border border-[rgba(255,255,255,0.05)] p-6">
-                  <p className="mb-2 font-cormorant text-3xl leading-none text-[#C9A84C]">
-                    &#10077;
-                  </p>
-                  <p className="font-cormorant text-[15px] italic leading-relaxed text-[rgba(245,245,240,0.55)]">
-                    {t.quote}
-                  </p>
-                  <p className="mt-auto pt-4 text-[13px] font-semibold text-[#F5F5F0]">
-                    {t.name}
-                  </p>
-                  <p className="text-[11px] tracking-[1px] text-[rgba(201,168,76,0.6)]">
-                    {t.car}
-                  </p>
-                </div>
-              </TiltCard>
-            </SectionReveal>
-          ))}
-        </div>
+        <AnimatedTestimonials testimonials={TESTIMONIALS} autoplay />
       </section>
 
       {/* ── Photo Gallery ── */}
