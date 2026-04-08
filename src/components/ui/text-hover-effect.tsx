@@ -46,18 +46,26 @@ export const TextHoverEffect = ({
         <linearGradient
           id="textGradient"
           gradientUnits="userSpaceOnUse"
-          cx="50%"
-          cy="50%"
-          r="25%"
+          x1="0%"
+          y1="0%"
+          x2="100%"
+          y2="0%"
         >
-          {hovered && (
-            <>
-              <stop offset="0%" stopColor="#C9A84C" />
-              <stop offset="30%" stopColor="#E8D48B" />
-              <stop offset="60%" stopColor="#C9A84C" />
-              <stop offset="100%" stopColor="#A88B3A" />
-            </>
-          )}
+          <stop offset="0%" stopColor="#C9A84C">
+            <animate attributeName="stop-color" values="#C9A84C;#ef4444;#f97316;#eab308;#22c55e;#3b82f6;#8b5cf6;#ec4899;#C9A84C" dur="6s" repeatCount="indefinite" />
+          </stop>
+          <stop offset="25%" stopColor="#ef4444">
+            <animate attributeName="stop-color" values="#ef4444;#f97316;#eab308;#22c55e;#3b82f6;#8b5cf6;#ec4899;#C9A84C;#ef4444" dur="6s" repeatCount="indefinite" />
+          </stop>
+          <stop offset="50%" stopColor="#22c55e">
+            <animate attributeName="stop-color" values="#22c55e;#3b82f6;#8b5cf6;#ec4899;#C9A84C;#ef4444;#f97316;#eab308;#22c55e" dur="6s" repeatCount="indefinite" />
+          </stop>
+          <stop offset="75%" stopColor="#3b82f6">
+            <animate attributeName="stop-color" values="#3b82f6;#8b5cf6;#ec4899;#C9A84C;#ef4444;#f97316;#eab308;#22c55e;#3b82f6" dur="6s" repeatCount="indefinite" />
+          </stop>
+          <stop offset="100%" stopColor="#8b5cf6">
+            <animate attributeName="stop-color" values="#8b5cf6;#ec4899;#C9A84C;#ef4444;#f97316;#eab308;#22c55e;#3b82f6;#8b5cf6" dur="6s" repeatCount="indefinite" />
+          </stop>
         </linearGradient>
 
         <motion.radialGradient
@@ -134,8 +142,9 @@ export const TextHoverEffect = ({
           stroke="url(#textGradient)"
           strokeWidth="0.7"
           fontSize="72"
-          mask="url(#textMask)"
+          mask={hovered ? "url(#textMask)" : undefined}
           className="fill-transparent font-[helvetica] font-bold"
+          style={{ opacity: hovered ? 1 : 0.3 }}
         >
           {line}
         </text>
