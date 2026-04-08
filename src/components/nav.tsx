@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -13,20 +13,32 @@ const NAV_LINKS = [
 
 export function Nav() {
   const pathname = usePathname();
+  const [visible, setVisible] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 60);
+      const currentY = window.scrollY;
+      const goingUp = currentY < lastScrollY.current;
+
+      setScrolled(currentY > 60);
+
+      if (currentY < 100) {
+        setVisible(true);
+      } else if (goingUp) {
+        setVisible(true);
+      } else if (currentY - lastScrollY.current > 10) {
+        setVisible(false);
+        setMobileOpen(false);
+      }
+
+      lastScrollY.current = currentY;
     }
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -34,38 +46,41 @@ export function Nav() {
   }, [pathname]);
 
   return (
-    <div className="fixed top-0 right-0 left-0 z-100 flex justify-center px-4 pt-4 transition-all duration-500">
+    <div
+      className={`fixed top-0 right-0 left-0 z-100 flex justify-center px-6 pt-3 transition-all duration-400 ${
+        visible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+      }`}
+    >
       <nav
-        className={`flex w-full max-w-6xl items-center justify-between px-6 py-3 transition-all duration-500 ${
+        className={`flex max-w-3xl items-center gap-6 px-5 py-2.5 transition-all duration-500 ${
           scrolled
-            ? "rounded-2xl border border-[rgba(201,168,76,0.12)] bg-[rgba(10,10,10,0.85)] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl"
-            : "rounded-2xl border border-transparent bg-transparent"
+            ? "rounded-full border border-[rgba(201,168,76,0.12)] bg-[rgba(10,10,10,0.85)] shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl"
+            : "rounded-full border border-transparent bg-transparent"
         }`}
       >
         {/* Logo */}
-        <Link href="/" className="flex cursor-none items-center gap-3">
+        <Link href="/" className="flex shrink-0 cursor-none items-center gap-2">
           <Image
             src="/images/ttmc-logo.png"
             alt="TTMC"
-            width={32}
-            height={32}
+            width={28}
+            height={28}
             className="rounded-full"
           />
-          <div className="hidden items-center gap-1 text-[11px] tracking-[4px] sm:flex">
-            <span className="font-sans text-[#F5F5F0]">TOP TIER</span>
-            <span className="font-sans text-[#C9A84C]">MIAMI</span>
-          </div>
+          <span className="hidden text-[10px] tracking-[3px] font-medium text-[rgba(245,245,240,0.6)] sm:block">
+            TTMC
+          </span>
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden items-center gap-8 md:flex">
+        <div className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`gold-underline relative cursor-none pb-0.5 text-[10px] tracking-[3px] transition-colors ${
+                className={`gold-underline relative cursor-none pb-0.5 text-[10px] tracking-[2px] transition-colors ${
                   isActive
                     ? "text-[#C9A84C]"
                     : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
@@ -73,9 +88,7 @@ export function Nav() {
               >
                 {link.label}
                 {isActive && (
-                  <span
-                    className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-[#C9A84C] to-[#E8D48B]"
-                  />
+                  <span className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-[#C9A84C] to-[#E8D48B]" />
                 )}
               </Link>
             );
@@ -83,7 +96,7 @@ export function Nav() {
 
           <Link
             href="/apply"
-            className="cursor-none rounded-md border border-[#C9A84C] px-5 py-2 text-[10px] tracking-[3px] text-[#C9A84C] transition-all hover:bg-[#C9A84C] hover:text-[#0A0A0A]"
+            className="btn-fill-gold cursor-none rounded-full px-5 py-1.5 text-[9px] tracking-[3px] font-semibold"
           >
             APPLY
           </Link>
@@ -114,7 +127,7 @@ export function Nav() {
 
         {/* Mobile overlay */}
         {mobileOpen && (
-          <div className="fixed inset-0 top-[72px] z-50 flex flex-col items-center justify-center gap-10 bg-[#0A0A0A]/98 md:hidden">
+          <div className="fixed inset-0 top-[56px] z-50 flex flex-col items-center justify-center gap-10 bg-[#0A0A0A]/98 md:hidden">
             {NAV_LINKS.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -131,7 +144,7 @@ export function Nav() {
             })}
             <Link
               href="/apply"
-              className="cursor-none rounded-md border border-[#C9A84C] px-8 py-3 text-sm tracking-[4px] text-[#C9A84C] transition-all hover:bg-[#C9A84C] hover:text-[#0A0A0A]"
+              className="btn-fill-gold cursor-none rounded-full px-8 py-3 text-sm tracking-[4px]"
             >
               APPLY
             </Link>
