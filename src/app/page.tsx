@@ -14,6 +14,7 @@ import { GridBeams } from "@/components/grid-beams"
 import { SectionReveal } from "@/components/section-reveal"
 import { TiltCard } from "@/components/tilt-card"
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials"
+import { FocusCards } from "@/components/ui/focus-cards"
 
 const PARTNER_NAMES = [
   "MPH CLUB",
@@ -288,41 +289,25 @@ export default function Home() {
         <AnimatedTestimonials testimonials={TESTIMONIALS} autoplay />
       </section>
 
-      {/* ── Photo Gallery ── */}
+      {/* ── Photo Gallery — Focus Cards ── */}
       <section className="mx-auto max-w-5xl px-6 py-24">
         <SectionReveal>
           <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
             THE CULTURE
           </p>
-          <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
+          <h2 className="mb-12 text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
             Built by Alignment. Not by Numbers.
           </h2>
         </SectionReveal>
 
-        <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[
-            { src: "/images/ttmc-event.jpg", label: "NIGHT RUN" },
-            { src: "/images/luxury-cars-lv.jpg", label: "FLEET LINEUP" },
-            { src: "/images/ferrari-f8-tributo.jpg", label: "COLLECTION" },
-            { src: "/images/event-track-day-homestead.jpg", label: "TRACK DAY" },
-          ].map((photo) => (
-            <SectionReveal key={photo.label}>
-              <div className="group relative aspect-[4/3] overflow-hidden rounded-xl">
-                <Image
-                  src={photo.src}
-                  alt={photo.label}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                  <p className="text-[10px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.8)]">
-                    {photo.label}
-                  </p>
-                </div>
-              </div>
-            </SectionReveal>
-          ))}
-        </div>
+        <FocusCards
+          cards={[
+            { title: "NIGHT RUN", src: "/images/ttmc-event.jpg" },
+            { title: "FLEET LINEUP", src: "/images/luxury-cars-lv.jpg" },
+            { title: "COLLECTION", src: "/images/ferrari-f8-tributo.jpg" },
+            { title: "TRACK DAY", src: "/images/event-track-day-homestead.jpg" },
+          ]}
+        />
       </section>
 
       {/* ── Beam Divider Alt ── */}
