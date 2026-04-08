@@ -67,7 +67,7 @@ export function Nav() {
             height={28}
             className="rounded-full"
           />
-          <span className="hidden text-[10px] tracking-[3px] font-medium text-[rgba(245,245,240,0.6)] sm:block">
+          <span className="hidden text-[14px] tracking-[3px] font-medium text-[rgba(245,245,240,0.6)] sm:block">
             TTMC
           </span>
         </Link>
@@ -80,7 +80,7 @@ export function Nav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`gold-underline relative cursor-none pb-0.5 text-[10px] tracking-[2px] transition-colors ${
+                className={`gold-underline relative cursor-none pb-0.5 text-[14px] tracking-[2px] transition-colors ${
                   isActive
                     ? "text-[#C9A84C]"
                     : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
@@ -96,7 +96,7 @@ export function Nav() {
 
           <Link
             href="/apply"
-            className="btn-fill-gold cursor-none rounded-full px-5 py-1.5 text-[9px] tracking-[3px] font-semibold"
+            className="btn-fill-gold cursor-none rounded-full px-5 py-1.5 text-[13px] tracking-[3px] font-semibold"
           >
             APPLY
           </Link>

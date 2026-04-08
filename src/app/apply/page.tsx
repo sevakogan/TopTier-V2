@@ -21,7 +21,7 @@ const INITIAL_FORM: ApplicationFormData = {
 const inputClassName =
   "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.1)] rounded-lg h-12 text-[#F5F5F0] placeholder:text-[rgba(245,245,240,0.2)] focus:border-[#C9A84C] focus-visible:ring-[#C9A84C]";
 
-const labelClassName = "text-[10px] tracking-[3px] text-[#C9A84C] mb-2 block";
+const labelClassName = "text-[14px] tracking-[3px] text-[#C9A84C] mb-2 block";
 
 export default function ApplyPage() {
   const [step, setStep] = useState<1 | 2>(1);
@@ -68,7 +68,7 @@ export default function ApplyPage() {
             Your application has been received.
           </p>
           <div className="mt-6 rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] px-6 py-4">
-            <p className="text-[11px] tracking-[3px] text-[#C9A84C] mb-2">
+            <p className="text-[15px] tracking-[3px] text-[#C9A84C] mb-2">
               CONFIRMATION SENT TO
             </p>
             <p className="text-[#F5F5F0] font-medium">{formData.email}</p>
@@ -80,7 +80,7 @@ export default function ApplyPage() {
             href="https://www.instagram.com/toptiermiamiclub/"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-8 text-[10px] tracking-[3px] text-[rgba(201,168,76,0.5)] hover:text-[#C9A84C] transition-colors"
+            className="mt-8 text-[14px] tracking-[3px] text-[rgba(201,168,76,0.5)] hover:text-[#C9A84C] transition-colors"
           >
             FOLLOW US @TOPTIERMIAMICLUB
           </a>
@@ -96,7 +96,7 @@ export default function ApplyPage() {
       <div className="relative z-10 w-full max-w-md">
         {/* Header */}
         <SectionReveal>
-          <p className="text-[10px] tracking-[3px] text-[#C9A84C] mb-3">
+          <p className="text-[14px] tracking-[3px] text-[#C9A84C] mb-3">
             APPLICATION
           </p>
           <h1 className="text-3xl md:text-4xl font-bold text-[#F5F5F0] mb-1">

@@ -101,7 +101,7 @@ export default function Home() {
           {/* Label */}
           <div className="flex items-center gap-3">
             <span className="h-px w-12 bg-[#C9A84C]" />
-            <span className="text-[12px] font-medium tracking-[6px] text-[#C9A84C]">
+            <span className="text-[16px] font-medium tracking-[6px] text-[#C9A84C]">
               EST. MMXXV &middot; MIAMI
             </span>
             <span className="h-px w-12 bg-[#C9A84C]" />
@@ -151,14 +151,14 @@ export default function Home() {
 
       {/* ── Section 3: Partner Logos Marquee ── */}
       <div className="border-y border-[rgba(255,255,255,0.04)] py-6">
-        <p className="mb-3 text-center text-[8px] tracking-[5px] text-[rgba(201,168,76,0.3)]">
+        <p className="mb-3 text-center text-[16px] tracking-[5px] text-[rgba(201,168,76,0.3)]">
           ECOSYSTEM PARTNERS
         </p>
         <Marquee pauseOnHover>
           {PARTNER_NAMES.map((name) => (
             <span
               key={name}
-              className="mx-8 text-[11px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.25)]"
+              className="mx-8 text-[15px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.25)]"
             >
               {name}
             </span>
@@ -187,7 +187,7 @@ export default function Home() {
         <div className="relative grid items-center gap-16 md:grid-cols-2">
           {/* Left column */}
           <SectionReveal>
-            <p className="mb-4 text-[10px] font-medium tracking-[5px] text-[#C9A84C]">
+            <p className="mb-4 text-[14px] font-medium tracking-[5px] text-[#C9A84C]">
               THE EXPERIENCE
             </p>
             <h2 className="font-cormorant text-[clamp(32px,4vw,48px)] font-bold">
@@ -218,10 +218,10 @@ export default function Home() {
                       <div className="mb-3 text-xl text-[#C9A84C]">
                         {card.icon}
                       </div>
-                      <p className="mb-1 text-[10px] font-semibold tracking-[3px]">
+                      <p className="mb-1 text-[14px] font-semibold tracking-[3px]">
                         {card.label}
                       </p>
-                      <p className="text-[12px] text-[rgba(245,245,240,0.35)]">
+                      <p className="text-[16px] text-[rgba(245,245,240,0.35)]">
                         {card.sub}
                       </p>
                     </div>
@@ -237,7 +237,7 @@ export default function Home() {
       <div className="flex justify-center py-12">
         <Link
           href="/apply"
-          className="btn-fill-gold rounded-lg px-12 py-4 text-[12px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
+          className="btn-fill-gold rounded-lg px-12 py-4 text-[16px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
         >
           APPLY FOR MEMBERSHIP &rarr;
         </Link>
@@ -246,7 +246,7 @@ export default function Home() {
       {/* ── How It Works ── */}
       <section className="mx-auto max-w-4xl px-6 py-24">
         <SectionReveal>
-          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+          <p className="mb-4 text-center text-[14px] tracking-[5px] text-[#C9A84C]">
             THE PROCESS
           </p>
           <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
@@ -278,7 +278,7 @@ export default function Home() {
       {/* ── Testimonials ── */}
       <section className="mx-auto max-w-5xl px-6 py-24">
         <SectionReveal>
-          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+          <p className="mb-4 text-center text-[14px] tracking-[5px] text-[#C9A84C]">
             MEMBER VOICES
           </p>
           <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
@@ -292,7 +292,7 @@ export default function Home() {
       {/* ── Photo Gallery — Focus Cards ── */}
       <section className="mx-auto max-w-5xl px-6 py-24">
         <SectionReveal>
-          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+          <p className="mb-4 text-center text-[14px] tracking-[5px] text-[#C9A84C]">
             THE CULTURE
           </p>
           <h2 className="mb-12 text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
@@ -332,7 +332,7 @@ export default function Home() {
             </p>
             <Link
               href="/apply"
-              className="btn-fill-gold rounded-lg px-12 py-4 text-[12px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
+              className="btn-fill-gold rounded-lg px-12 py-4 text-[16px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
             >
               APPLY NOW
             </Link>

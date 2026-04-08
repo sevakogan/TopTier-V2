@@ -120,7 +120,7 @@ export default function PerksPage() {
   return (
     <main className="max-w-5xl mx-auto pt-36 pb-32 px-6">
       <SectionReveal>
-        <p className="text-[10px] tracking-[5px] text-[#C9A84C] mb-4">
+        <p className="text-[14px] tracking-[5px] text-[#C9A84C] mb-4">
           SPONSOR NETWORK
         </p>
         <h1 className="font-cormorant text-[clamp(36px,5vw,64px)] font-bold">
@@ -136,7 +136,7 @@ export default function PerksPage() {
           <SectionReveal key={category.label}>
             <div className="flex items-center gap-3 border-b border-[rgba(201,168,76,0.12)] pb-4 mb-6">
               <span className="text-[#C9A84C]">{category.icon}</span>
-              <span className="text-[10px] tracking-[4px] font-semibold text-[#C9A84C]">
+              <span className="text-[14px] tracking-[4px] font-semibold text-[#C9A84C]">
                 {category.label}
               </span>
             </div>
@@ -150,12 +150,12 @@ export default function PerksPage() {
                         <h3 className="font-cormorant text-lg font-semibold group-hover:text-[#C9A84C] transition-colors">
                           {perk.name}
                           {perk.sponsor && (
-                            <span className="text-[12px] text-[rgba(245,245,240,0.3)] font-sans font-normal ml-2">
+                            <span className="text-[16px] text-[rgba(245,245,240,0.3)] font-sans font-normal ml-2">
                               {perk.sponsor}
                             </span>
                           )}
                         </h3>
-                        <span className="bg-[#C9A84C] text-[#0a0a0a] text-[9px] tracking-[1px] font-bold px-2 py-0.5 rounded shrink-0">
+                        <span className="bg-[#C9A84C] text-[#0a0a0a] text-[13px] tracking-[1px] font-bold px-2 py-0.5 rounded shrink-0">
                           {perk.badge}
                         </span>
                       </div>
@@ -165,7 +165,7 @@ export default function PerksPage() {
                       </p>
 
                       {perk.credibility && (
-                        <p className="text-[11px] text-[rgba(201,168,76,0.5)] mt-2 italic">
+                        <p className="text-[15px] text-[rgba(201,168,76,0.5)] mt-2 italic">
                           {perk.credibility}
                         </p>
                       )}

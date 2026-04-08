@@ -74,7 +74,7 @@ export default function EventsPage() {
   return (
     <main className="max-w-4xl mx-auto pt-36 pb-32 px-6">
       <SectionReveal>
-        <p className="text-[10px] tracking-[5px] text-[#C9A84C] mb-4">
+        <p className="text-[14px] tracking-[5px] text-[#C9A84C] mb-4">
           MEMBER EVENTS
         </p>
         <h1 className="font-cormorant text-[clamp(36px,5vw,64px)] font-bold">
@@ -97,15 +97,15 @@ export default function EventsPage() {
 
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <span className="text-[8px] tracking-[2px] font-semibold text-[#C9A84C] border border-[rgba(201,168,76,0.3)] px-2 py-0.5 rounded">
+                    <span className="text-[16px] tracking-[2px] font-semibold text-[#C9A84C] border border-[rgba(201,168,76,0.3)] px-2 py-0.5 rounded">
                       {event.type}
                     </span>
-                    <span className="text-[11px] text-[rgba(245,245,240,0.3)]">
+                    <span className="text-[15px] text-[rgba(245,245,240,0.3)]">
                       {event.date}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[12px] text-[rgba(245,245,240,0.3)]">
+                    <span className="text-[16px] text-[rgba(245,245,240,0.3)]">
                       {"\uD83D\uDCCD"} {event.location}
                     </span>
                     {event.image && (

@@ -22,7 +22,7 @@ export function HeroStats({ className }: HeroStatsProps) {
           className="font-serif text-4xl font-bold text-[#C9A84C]"
         />
         <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
-        <p className="text-[9px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
+        <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           PRIVATE EVENTS
         </p>
       </div>
@@ -34,7 +34,7 @@ export function HeroStats({ className }: HeroStatsProps) {
           className="font-serif text-4xl font-bold text-[#C9A84C]"
         />
         <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
-        <p className="text-[9px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
+        <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           TRUSTED PARTNERS
         </p>
       </div>
@@ -46,7 +46,7 @@ export function HeroStats({ className }: HeroStatsProps) {
           className="font-serif text-4xl font-bold text-[#C9A84C]"
         />
         <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
-        <p className="text-[9px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
+        <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           VETTED MEMBERS
         </p>
       </div>
