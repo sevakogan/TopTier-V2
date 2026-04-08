@@ -87,10 +87,10 @@ export default function Home() {
   return (
     <>
       {/* ── Section 1: Hero ── */}
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      <section className="relative flex h-screen min-h-[600px] items-center justify-center overflow-hidden">
         {/* Background layers */}
         <VideoHero />
-        <BackgroundBeams className="z-[1]" />
+        <BackgroundBeams className="absolute inset-0 z-[1]" />
         <Spotlight className="-top-40 left-0 md:-top-20 md:left-60" fill="#C9A84C" />
         <div className="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
           <Meteors number={15} />

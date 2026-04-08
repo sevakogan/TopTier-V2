@@ -11,7 +11,7 @@ export function HeroStats({ className }: HeroStatsProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center gap-16 flex-wrap sm:gap-8",
+        "flex items-center justify-center gap-6 sm:gap-12",
         className
       )}
     >
@@ -19,9 +19,9 @@ export function HeroStats({ className }: HeroStatsProps) {
       <div className="text-center">
         <NumberTicker
           value={50}
-          className="font-serif text-4xl font-bold text-[#C9A84C]"
+          className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl"
         />
-        <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
+        <span className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl">+</span>
         <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           PRIVATE EVENTS
         </p>
@@ -31,9 +31,9 @@ export function HeroStats({ className }: HeroStatsProps) {
       <div className="text-center">
         <NumberTicker
           value={30}
-          className="font-serif text-4xl font-bold text-[#C9A84C]"
+          className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl"
         />
-        <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
+        <span className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl">+</span>
         <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           TRUSTED PARTNERS
         </p>
@@ -43,9 +43,9 @@ export function HeroStats({ className }: HeroStatsProps) {
       <div className="text-center">
         <NumberTicker
           value={200}
-          className="font-serif text-4xl font-bold text-[#C9A84C]"
+          className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl"
         />
-        <span className="font-serif text-4xl font-bold text-[#C9A84C]">+</span>
+        <span className="font-serif text-2xl font-bold text-[#C9A84C] sm:text-4xl">+</span>
         <p className="text-[13px] tracking-[4px] text-[rgba(245,245,240,0.3)] mt-1">
           VETTED MEMBERS
         </p>
