@@ -229,16 +229,12 @@ export default function Home() {
       </section>
 
       {/* ── Mid-page CTA ── */}
-      <div className="py-12 text-center">
-        <Link href="/apply">
-          <ShimmerButton
-            shimmerColor="#C9A84C"
-            background="rgba(201,168,76,0.12)"
-            borderRadius="8px"
-            className="mx-auto px-12 py-5 text-[13px] font-semibold tracking-[4px]"
-          >
-            APPLY FOR MEMBERSHIP &rarr;
-          </ShimmerButton>
+      <div className="flex justify-center py-12">
+        <Link
+          href="/apply"
+          className="btn-fill-gold rounded-lg px-12 py-4 text-[12px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
+        >
+          APPLY FOR MEMBERSHIP &rarr;
         </Link>
       </div>
 
@@ -352,7 +348,7 @@ export default function Home() {
       {/* ── Section 6: Bottom CTA ── */}
       <section className="mx-auto max-w-2xl px-6 py-32 text-center">
         <SectionReveal>
-          <div className="relative overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.12)] bg-[rgba(201,168,76,0.02)] p-20">
+          <div className="relative flex flex-col items-center overflow-hidden rounded-2xl border border-[rgba(201,168,76,0.12)] bg-[rgba(201,168,76,0.02)] px-8 py-20">
             {/* Top gold line */}
             <div className="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
 
@@ -362,19 +358,15 @@ export default function Home() {
             <p className="font-cormorant text-[clamp(20px,3vw,32px)] text-[#F5F5F0]">
               hours.
             </p>
-            <p className="mx-auto mt-4 mb-10 max-w-sm text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
+            <p className="mt-4 mb-10 max-w-sm text-center text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
               That&apos;s how long it takes us to review your application. If
               you&apos;re a fit, you&apos;ll hear from us.
             </p>
-            <Link href="/apply">
-              <ShimmerButton
-                shimmerColor="#C9A84C"
-                background="rgba(201,168,76,0.12)"
-                borderRadius="8px"
-                className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
-              >
-                APPLY NOW
-              </ShimmerButton>
+            <Link
+              href="/apply"
+              className="btn-fill-gold rounded-lg px-12 py-4 text-[12px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
+            >
+              APPLY NOW
             </Link>
           </div>
         </SectionReveal>

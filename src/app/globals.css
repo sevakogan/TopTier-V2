@@ -270,3 +270,32 @@ body {
 .gold-underline:hover::after {
   width: 100%;
 }
+
+/* V1 button style — gold fills from left on hover */
+.btn-fill-gold {
+  position: relative;
+  overflow: hidden;
+  z-index: 0;
+  border: 1px solid #C9A84C;
+  color: #C9A84C;
+  background: transparent;
+  transition: color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-fill-gold::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #C9A84C;
+  transform: translateX(-101%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.btn-fill-gold:hover::before {
+  transform: translateX(0);
+}
+
+.btn-fill-gold:hover {
+  color: #0A0A0A;
+}
