@@ -21,10 +21,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://toptiermiamiclub.com"),
   title: "Top Tier Miami Club",
   description:
     "The convoy is the experience. The dinner is the connection.",
   openGraph: {
+    title: "Top Tier Miami Club",
+    description: "The convoy is the experience. The dinner is the connection.",
     images: ["/og-image.jpg"],
   },
 };

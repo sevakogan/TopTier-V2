@@ -15,7 +15,7 @@ export function Footer() {
         <div className="flex items-center gap-4">
           {/* Instagram */}
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/toptiermiamiclub/"
             target="_blank"
             rel="noopener noreferrer"
             className="transition-colors hover:text-[#C9A84C]"
@@ -57,6 +57,15 @@ export function Footer() {
             </svg>
           </a>
         </div>
+      </div>
+
+      <div className="mx-auto mt-4 max-w-[1200px] text-center">
+        <a
+          href="mailto:memberships@toptiermiamiclub.com"
+          className="text-[11px] tracking-[2px] text-[rgba(245,245,240,0.2)] transition-colors hover:text-[#C9A84C]"
+        >
+          memberships@toptiermiamiclub.com
+        </a>
       </div>
     </footer>
   );

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { VideoHero } from "@/components/video-hero"
 import { BackgroundBeams } from "@/components/ui/background-beams"
 import { Spotlight } from "@/components/ui/spotlight"
@@ -22,6 +23,7 @@ const PARTNER_NAMES = [
   "TITAN CHEMICALS",
   "XZOTICA MIAMI",
   "ALPHA EXOTICS",
+  "CARSUNDERSTARS",
 ] as const
 
 const MARQUEE_ITEMS = [
@@ -300,6 +302,43 @@ export default function Home() {
                   </p>
                 </div>
               </TiltCard>
+            </SectionReveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Photo Gallery ── */}
+      <section className="mx-auto max-w-5xl px-6 py-24">
+        <SectionReveal>
+          <p className="mb-4 text-center text-[10px] tracking-[5px] text-[#C9A84C]">
+            THE CULTURE
+          </p>
+          <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
+            Built by Alignment. Not by Numbers.
+          </h2>
+        </SectionReveal>
+
+        <div className="mt-12 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[
+            { src: "/images/ttmc-event.jpg", label: "NIGHT RUN" },
+            { src: "/images/luxury-cars-lv.jpg", label: "FLEET LINEUP" },
+            { src: "/images/ferrari-f8-tributo.jpg", label: "COLLECTION" },
+            { src: "/images/event-track-day-homestead.jpg", label: "TRACK DAY" },
+          ].map((photo) => (
+            <SectionReveal key={photo.label}>
+              <div className="group relative aspect-[4/3] overflow-hidden rounded-xl">
+                <Image
+                  src={photo.src}
+                  alt={photo.label}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
+                  <p className="text-[10px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.8)]">
+                    {photo.label}
+                  </p>
+                </div>
+              </div>
             </SectionReveal>
           ))}
         </div>

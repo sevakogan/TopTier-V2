@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SectionReveal } from "@/components/section-reveal";
 import { TiltCard } from "@/components/tilt-card";
 
@@ -15,6 +16,7 @@ const events = [
     description:
       "Twenty-three cars lined up outside Shift Arcade in Wynwood. Inside, members raced each other on full-motion simulators. At midnight, the convoy rolled out through Wynwood. Drone footage is still circulating.",
     color: "bg-[#C9A84C]",
+    image: "/images/ttmc-event.jpg",
   },
   {
     title: "Midnight Run: Key Biscayne",
@@ -24,6 +26,7 @@ const events = [
     description:
       "Twenty cars through the causeway under the moonlight. Photo stops at the bridge. The convoy pulled into a private waterfront spot for dinner. Nobody posted the location.",
     color: "bg-blue-500",
+    image: "/images/event-miami-beach-cruise.jpg",
   },
   {
     title: "Nick Castle's VIP Night",
@@ -33,6 +36,7 @@ const events = [
     description:
       "One of Miami's most reserved venues. Twelve members at the table. No phones. The kind of introductions that don't happen at networking events.",
     color: "bg-purple-500",
+    image: "/images/event-michelin-chef.jpg",
   },
   {
     title: "SCS × Hard Rock Cruise",
@@ -42,6 +46,7 @@ const events = [
     description:
       "Joint cruise with Supercar Society. Forty exotics rolling through Biscayne. Local media covered it. Two new sponsorship deals closed that night.",
     color: "bg-red-500",
+    image: "/images/event-wynwood-night-tour.jpg",
   },
   {
     title: "Wynwood Art Basel Run",
@@ -51,6 +56,7 @@ const events = [
     description:
       "Art Basel weekend. Exotics parked at curated murals across Wynwood. Select non-members were invited. Content from that night is still making rounds.",
     color: "bg-pink-500",
+    image: "/images/event-yacht-caviar-vip.jpg",
   },
   {
     title: "Founders Circle Dinner",
@@ -60,6 +66,7 @@ const events = [
     description:
       "Quarterly. Twelve seats. No phones. Deal flow conversations and direct intros that changed businesses.",
     color: "bg-emerald-500",
+    image: null,
   },
 ] as const;
 
@@ -97,9 +104,21 @@ export default function EventsPage() {
                       {event.date}
                     </span>
                   </div>
-                  <span className="text-[12px] text-[rgba(245,245,240,0.3)]">
-                    {"\uD83D\uDCCD"} {event.location}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[12px] text-[rgba(245,245,240,0.3)]">
+                      {"\uD83D\uDCCD"} {event.location}
+                    </span>
+                    {event.image && (
+                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg">
+                        <Image
+                          src={event.image}
+                          alt={event.title}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <h2 className="font-cormorant text-2xl font-semibold mt-3 group-hover:text-[#C9A84C] transition-colors">

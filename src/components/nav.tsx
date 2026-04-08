@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
@@ -50,11 +51,7 @@ export function Nav() {
     >
       {/* Logo */}
       <Link href="/" className="flex cursor-none items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#C9A84C]">
-          <span className="font-serif text-lg font-semibold text-[#C9A84C]">
-            T
-          </span>
-        </div>
+        <Image src="/images/ttmc-logo.png" alt="TTMC" width={36} height={36} className="rounded-full" />
         <div className="flex items-center gap-1 text-[11px] tracking-[4px]">
           <span className="font-sans text-[#F5F5F0]">TOP TIER</span>
           <span className="font-sans text-[#C9A84C]">MIAMI</span>
