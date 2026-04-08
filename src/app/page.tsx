@@ -15,6 +15,7 @@ import { SectionReveal } from "@/components/section-reveal"
 import { TiltCard } from "@/components/tilt-card"
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials"
 import { FocusCards } from "@/components/ui/focus-cards"
+import { Timeline } from "@/components/ui/timeline"
 
 const PARTNER_NAMES = [
   "MPH CLUB",
@@ -248,36 +249,32 @@ export default function Home() {
         </Link>
       </div>
 
-      {/* ── How It Works ── */}
-      <section className="mx-auto max-w-4xl px-6 py-24">
+      {/* ── How It Works — Timeline ── */}
+      <section className="px-6 py-24">
         <SectionReveal>
           <p className="mb-4 text-center text-[14px] tracking-[5px] text-[#C9A84C]">
             THE PROCESS
           </p>
-          <h2 className="text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
+          <h2 className="mb-8 text-center font-cormorant text-[clamp(28px,3vw,40px)] font-bold">
             Four Steps. That&apos;s It.
           </h2>
         </SectionReveal>
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
-          {HOW_IT_WORKS_STEPS.map((step, i) => (
-            <SectionReveal key={step.number} delay={i * 0.15}>
-              <TiltCard>
-                <div className="rounded-xl border border-[rgba(255,255,255,0.05)] p-6">
-                  <p className="font-cormorant text-5xl font-bold text-[#C9A84C] opacity-30">
-                    {step.number}
-                  </p>
-                  <p className="mt-2 font-cormorant text-xl font-semibold">
-                    {step.title}
-                  </p>
-                  <p className="mt-2 text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
-                    {step.body}
-                  </p>
-                </div>
-              </TiltCard>
-            </SectionReveal>
-          ))}
-        </div>
+        <Timeline
+          data={HOW_IT_WORKS_STEPS.map((step) => ({
+            title: step.number,
+            content: (
+              <div className="pb-8">
+                <h3 className="mb-2 font-cormorant text-2xl font-bold text-[#F5F5F0] md:text-3xl">
+                  {step.title}
+                </h3>
+                <p className="max-w-md text-[15px] leading-relaxed text-[rgba(245,245,240,0.45)]">
+                  {step.body}
+                </p>
+              </div>
+            ),
+          }))}
+        />
       </section>
 
       {/* ── Testimonials ── */}
