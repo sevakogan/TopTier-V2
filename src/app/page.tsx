@@ -47,7 +47,7 @@ export default function Home() {
           {/* Label */}
           <div className="flex items-center gap-3">
             <span className="h-px w-12 bg-[#C9A84C]" />
-            <span className="text-[10px] font-medium tracking-[6px] text-[#C9A84C]">
+            <span className="text-[12px] font-medium tracking-[6px] text-[#C9A84C]">
               EST. MMXXV &middot; MIAMI
             </span>
             <span className="h-px w-12 bg-[#C9A84C]" />
@@ -59,7 +59,7 @@ export default function Home() {
           </div>
 
           {/* Subtitle */}
-          <div className="mt-10 max-w-md font-cormorant text-lg italic leading-relaxed text-[rgba(245,245,240,0.6)]">
+          <div className="mt-10 max-w-lg font-cormorant text-xl italic leading-relaxed text-[rgba(245,245,240,0.6)] sm:text-2xl">
             <p>The convoy is the experience.</p>
             <p>The dinner is the connection.</p>
           </div>
@@ -70,14 +70,14 @@ export default function Home() {
               <ShimmerButton
                 shimmerColor="#C9A84C"
                 background="rgba(201,168,76,0.12)"
-                className="px-10 py-4 text-[11px] font-medium tracking-[4px]"
+                className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
               >
                 APPLY FOR MEMBERSHIP &rarr;
               </ShimmerButton>
             </Link>
             <Link
               href="/events"
-              className="rounded-xl border border-[rgba(245,245,240,0.15)] px-10 py-4 text-[11px] font-medium tracking-[4px] text-[rgba(245,245,240,0.6)] transition-all hover:border-[#C9A84C] hover:text-[#C9A84C]"
+              className="rounded-xl border border-[rgba(245,245,240,0.15)] px-12 py-5 text-[13px] font-semibold tracking-[4px] text-[rgba(245,245,240,0.6)] transition-all hover:border-[#C9A84C] hover:text-[#C9A84C]"
             >
               EXPLORE
             </Link>
@@ -97,7 +97,7 @@ export default function Home() {
           {MARQUEE_ITEMS.map((item) => (
             <span
               key={item}
-              className="text-[13px] font-medium tracking-[6px] text-[rgba(201,168,76,0.2)]"
+              className="text-[15px] font-medium tracking-[6px] text-[rgba(201,168,76,0.2)]"
             >
               {item} &middot;
             </span>
