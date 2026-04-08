@@ -78,7 +78,8 @@ pnpm add framer-motion gsap @studio-freight/lenis
 |--------|-----------|-------|
 | Aceternity UI | Background Beams | Hero background (replaces canvas) |
 | Aceternity UI | Spotlight | Cursor-following gold spotlight |
-| Aceternity UI | Text Generate Effect | Hero title character-by-character reveal |
+| Aceternity UI | Text Generate Effect | Hero subtitle character-by-character reveal |
+| Aceternity UI | Text Hover Effect | Hero title "TOP TIER MIAMI CLUB" — SVG gradient outline on hover (x.ai style) |
 | Aceternity UI | Lamp Effect | Section heading gold glow reveal |
 | Aceternity UI | Animated Beam | Path illustrations connecting elements |
 | Magic UI | Marquee | Smooth infinite marquee strip |
