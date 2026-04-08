@@ -117,11 +117,12 @@ export default function Home() {
           </div>
 
           {/* Buttons */}
-          <div className="mt-12 flex gap-4">
+          <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
             <Link href="/apply">
               <ShimmerButton
                 shimmerColor="#C9A84C"
                 background="rgba(201,168,76,0.12)"
+                borderRadius="8px"
                 className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
               >
                 APPLY FOR MEMBERSHIP &rarr;
@@ -129,7 +130,7 @@ export default function Home() {
             </Link>
             <Link
               href="/events"
-              className="rounded-xl border border-[rgba(245,245,240,0.15)] px-12 py-5 text-[13px] font-semibold tracking-[4px] text-[rgba(245,245,240,0.6)] transition-all hover:border-[#C9A84C] hover:text-[#C9A84C]"
+              className="rounded-lg border border-[rgba(245,245,240,0.15)] px-12 py-5 text-[13px] font-semibold tracking-[4px] text-[rgba(245,245,240,0.6)] transition-all hover:border-[#C9A84C] hover:text-[#C9A84C]"
             >
               EXPLORE
             </Link>
@@ -233,7 +234,8 @@ export default function Home() {
           <ShimmerButton
             shimmerColor="#C9A84C"
             background="rgba(201,168,76,0.12)"
-            className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
+            borderRadius="8px"
+            className="mx-auto px-12 py-5 text-[13px] font-semibold tracking-[4px]"
           >
             APPLY FOR MEMBERSHIP &rarr;
           </ShimmerButton>
@@ -368,7 +370,8 @@ export default function Home() {
               <ShimmerButton
                 shimmerColor="#C9A84C"
                 background="rgba(201,168,76,0.12)"
-                className="px-10 py-4 text-[11px] font-medium tracking-[4px]"
+                borderRadius="8px"
+                className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
               >
                 APPLY NOW
               </ShimmerButton>
