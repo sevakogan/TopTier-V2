@@ -35,7 +35,7 @@ export const TextHoverEffect = ({
       ref={svgRef}
       width="100%"
       height="100%"
-      viewBox={lines.length > 1 ? "0 0 300 120" : "0 0 300 100"}
+      viewBox={lines.length > 1 ? "0 0 600 200" : "0 0 600 120"}
       xmlns="http://www.w3.org/2000/svg"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -94,11 +94,12 @@ export const TextHoverEffect = ({
         <text
           key={`ghost-${i}`}
           x="50%"
-          y={lines.length === 1 ? "50%" : `${35 + i * 35}%`}
+          y={lines.length === 1 ? "50%" : `${38 + i * 28}%`}
           textAnchor="middle"
           dominantBaseline="middle"
           strokeWidth="0.7"
-          className="fill-transparent stroke-[rgba(245,245,240,0.5)] font-[helvetica] text-7xl font-bold"
+          fontSize="72"
+          className="fill-transparent stroke-[rgba(245,245,240,0.5)] font-[helvetica] font-bold"
           style={{ opacity: hovered ? 1 : 0.7 }}
         >
           {line}
@@ -109,11 +110,12 @@ export const TextHoverEffect = ({
         <motion.text
           key={`stroke-${i}`}
           x="50%"
-          y={lines.length === 1 ? "50%" : `${35 + i * 35}%`}
+          y={lines.length === 1 ? "50%" : `${38 + i * 28}%`}
           textAnchor="middle"
           dominantBaseline="middle"
           strokeWidth="0.7"
-          className="fill-transparent stroke-[rgba(245,245,240,0.5)] font-[helvetica] text-7xl font-bold"
+          fontSize="72"
+          className="fill-transparent stroke-[rgba(245,245,240,0.5)] font-[helvetica] font-bold"
           initial={{ strokeDashoffset: 1000, strokeDasharray: 1000 }}
           animate={{ strokeDashoffset: 0, strokeDasharray: 1000 }}
           transition={{ duration: 4, ease: "easeInOut", delay: i * 0.3 }}
@@ -126,13 +128,14 @@ export const TextHoverEffect = ({
         <text
           key={`gradient-${i}`}
           x="50%"
-          y={lines.length === 1 ? "50%" : `${35 + i * 35}%`}
+          y={lines.length === 1 ? "50%" : `${38 + i * 28}%`}
           textAnchor="middle"
           dominantBaseline="middle"
           stroke="url(#textGradient)"
           strokeWidth="0.7"
+          fontSize="72"
           mask="url(#textMask)"
-          className="fill-transparent font-[helvetica] text-7xl font-bold"
+          className="fill-transparent font-[helvetica] font-bold"
         >
           {line}
         </text>
