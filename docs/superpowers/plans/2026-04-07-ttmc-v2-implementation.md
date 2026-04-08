@@ -71,10 +71,10 @@ src/components/magicui/meteors.tsx
 
 ```bash
 cd "/Users/seva/Documents/Claude - Code/TopTier-V2"
-npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --turbopack --import-alias "@/*" --use-npm --yes
+npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --yes
 ```
 
-Note: Run from the existing TopTier-V2 directory. The `--yes` flag accepts defaults. This creates Next.js 16 with App Router, TypeScript, Tailwind CSS v4, ESLint, Turbopack, and src/ directory.
+Note: Run from the existing TopTier-V2 directory. Next.js 16 defaults: App Router, TypeScript, Tailwind CSS v4 (CSS-first config — NO tailwind.config.ts), ESLint, Turbopack. Tailwind v4 uses `@import "tailwindcss"` + `@theme {}` blocks in globals.css. PostCSS plugin is `@tailwindcss/postcss`.
 
 - [ ] **Step 2: Verify the scaffold**
 
@@ -111,7 +111,7 @@ git commit -m "chore: scaffold Next.js 16 project with Tailwind v4"
 npm install framer-motion gsap lenis
 ```
 
-Note: `lenis` (not `@studio-freight/lenis` — package was renamed).
+Note: `lenis` (not `@studio-freight/lenis` — renamed). Requires Node.js 20.9+.
 
 - [ ] **Step 2: Install Supabase client**
 
