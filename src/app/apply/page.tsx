@@ -59,15 +59,31 @@ export default function ApplyPage() {
     return (
       <div className="relative min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
         <BackgroundBeams className="opacity-40" />
-        <SectionReveal className="relative z-10 text-center flex flex-col items-center">
+        <SectionReveal className="relative z-10 text-center flex flex-col items-center max-w-md">
           <div className="w-16 h-16 rounded-full border-2 border-[#C9A84C] flex items-center justify-center mb-6">
             <span className="text-[#C9A84C] text-2xl">&#10003;</span>
           </div>
-          <TextGenerateEffect words="Application Received" className="text-[#F5F5F0]" />
-          <p className="text-[rgba(245,245,240,0.5)] mt-4 max-w-md leading-relaxed">
-            We review every application personally. If you&apos;re a fit, expect
-            to hear from us within 48 hours.
+          <TextGenerateEffect words="Thank You" className="text-[#F5F5F0]" />
+          <p className="text-[rgba(245,245,240,0.6)] mt-6 text-lg leading-relaxed font-cormorant italic">
+            Your application has been received.
           </p>
+          <div className="mt-6 rounded-xl border border-[rgba(201,168,76,0.15)] bg-[rgba(201,168,76,0.04)] px-6 py-4">
+            <p className="text-[11px] tracking-[3px] text-[#C9A84C] mb-2">
+              CONFIRMATION SENT TO
+            </p>
+            <p className="text-[#F5F5F0] font-medium">{formData.email}</p>
+          </div>
+          <p className="text-[rgba(245,245,240,0.4)] mt-6 text-[14px] leading-relaxed">
+            We review every application personally. Expect to hear from us within 48 hours. Check your inbox for a confirmation email.
+          </p>
+          <a
+            href="https://www.instagram.com/toptiermiamiclub/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 text-[10px] tracking-[3px] text-[rgba(201,168,76,0.5)] hover:text-[#C9A84C] transition-colors"
+          >
+            FOLLOW US @TOPTIERMIAMICLUB
+          </a>
         </SectionReveal>
       </div>
     );
