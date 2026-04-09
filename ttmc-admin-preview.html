@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTMC Admin — CRM Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0A0A0A;
+  --bg2: #111111;
+  --bg3: #1A1A1A;
+  --gold: #C9A84C;
+  --gold-light: #E8D48B;
+  --white: #F5F5F0;
+  --grey: rgba(245,245,240,0.45);
+  --grey-muted: rgba(245,245,240,0.25);
+  --border: rgba(255,255,255,0.06);
+  --radius: 12px;
+}
+body { background: var(--bg); color: var(--white); font-family: 'Outfit', sans-serif; display: flex; min-height: 100vh; }
+::selection { background: rgba(201,168,76,0.3); }
+
+/* Sidebar */
+.sidebar { width: 240px; background: var(--bg2); border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; }
+.sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 8px; }
+.sidebar-logo-dot { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gold); }
+.sidebar-logo-text { font-size: 11px; letter-spacing: 3px; font-weight: 600; color: var(--grey); }
+
+.sidebar-section { font-size: 10px; letter-spacing: 2px; color: var(--grey-muted); padding: 0 8px; margin: 20px 0 8px; }
+.sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--grey); cursor: pointer; transition: all 0.15s; margin-bottom: 2px; }
+.sidebar-link:hover { background: rgba(255,255,255,0.04); color: var(--white); }
+.sidebar-link.active { background: rgba(201,168,76,0.1); color: var(--gold); }
+.sidebar-link .badge { margin-left: auto; background: var(--gold); color: var(--bg); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+
+.sidebar-role { margin-top: auto; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); }
+.sidebar-role-label { font-size: 9px; letter-spacing: 2px; color: var(--gold); margin-bottom: 4px; }
+.sidebar-role-name { font-size: 13px; font-weight: 600; }
+.sidebar-role-email { font-size: 11px; color: var(--grey-muted); }
+
+/* Main */
+.main { margin-left: 240px; flex: 1; padding: 32px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.page-title { font-size: 24px; font-weight: 700; }
+.page-subtitle { font-size: 13px; color: var(--grey); margin-top: 4px; }
+
+/* Stats row */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+.stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.stat-card-label { font-size: 11px; letter-spacing: 2px; color: var(--grey-muted); margin-bottom: 8px; }
+.stat-card-value { font-size: 28px; font-weight: 700; color: var(--gold); }
+.stat-card-change { font-size: 11px; color: #22c55e; margin-top: 4px; }
+.stat-card-change.neg { color: #ef4444; }
+
+/* Buttons */
+.btn { padding: 8px 16px; border-radius: 8px; font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; border: none; }
+.btn-gold { background: var(--gold); color: var(--bg); }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--grey); }
+.btn-outline:hover { border-color: rgba(255,255,255,0.15); color: var(--white); }
+.btn-approve { background: #22c55e; color: #fff; }
+.btn-reject { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; }
+.btn-reject:hover { background: rgba(239,68,68,0.1); }
+
+/* Table */
+.table-container { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.table-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.table-header-title { font-size: 14px; font-weight: 600; }
+.table-search { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; color: var(--white); font-family: 'Outfit'; font-size: 13px; outline: none; width: 240px; }
+.table-search:focus { border-color: var(--gold); }
+.table-search::placeholder { color: var(--grey-muted); }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 10px; letter-spacing: 2px; color: var(--grey-muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+td { padding: 14px 20px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+tr:hover td { background: rgba(255,255,255,0.02); }
+tr:last-child td { border-bottom: none; }
+
+/* Badges */
+.badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; letter-spacing: 1px; }
+.badge-pending { background: rgba(234,179,8,0.15); color: #eab308; }
+.badge-approved { background: rgba(34,197,94,0.15); color: #22c55e; }
+.badge-rejected { background: rgba(239,68,68,0.15); color: #ef4444; }
+.badge-active { background: rgba(34,197,94,0.15); color: #22c55e; }
+.badge-core { background: rgba(201,168,76,0.15); color: var(--gold); }
+.badge-vip { background: rgba(168,85,247,0.15); color: #a855f7; }
+.badge-sc { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.badge-draft { background: rgba(255,255,255,0.08); color: var(--grey); }
+.badge-review { background: rgba(234,179,8,0.15); color: #eab308; }
+
+/* Tabs */
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+.tab { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--grey); cursor: pointer; transition: all 0.15s; }
+.tab:hover { color: var(--white); }
+.tab.active { background: rgba(201,168,76,0.15); color: var(--gold); }
+
+/* Application cards */
+.app-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 8px; display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; transition: border-color 0.15s; }
+.app-card { cursor: pointer; }
+.app-card:hover { border-color: rgba(255,255,255,0.1); }
+.app-card-info h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.app-card-meta { font-size: 12px; color: var(--grey); display: flex; gap: 16px; flex-wrap: wrap; }
+.app-card-meta span { display: flex; align-items: center; gap: 4px; }
+.app-card-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+/* Toggle switch */
+.toggle { width: 36px; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: rgba(34,197,94,0.4); }
+.toggle::after { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: var(--grey); top: 2px; left: 2px; transition: all 0.2s; }
+.toggle.on::after { left: 18px; background: #22c55e; }
+
+/* Modal overlay */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 480px; max-width: 90vw; }
+.modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 6px; }
+.form-input { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--white); font-family: 'Outfit'; font-size: 13px; outline: none; }
+.form-input:focus { border-color: var(--gold); }
+
+/* Tier selector */
+.tier-options { display: flex; gap: 8px; }
+.tier-option { flex: 1; padding: 16px; border: 1px solid var(--border); border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.15s; }
+.tier-option:hover { border-color: rgba(255,255,255,0.15); }
+.tier-option.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+.tier-option-name { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+.tier-option-price { font-size: 11px; color: var(--grey); }
+
+/* Role indicator */
+.role-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; font-size: 9px; letter-spacing: 1px; font-weight: 600; }
+.role-admin { background: rgba(201,168,76,0.15); color: var(--gold); }
+.role-partner { background: rgba(59,130,246,0.15); color: #3b82f6; }
+.role-events { background: rgba(168,85,247,0.15); color: #a855f7; }
+
+/* Page containers */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Clickable rows */
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: rgba(201,168,76,0.03); }
+
+/* Detail pages — inside .main, sidebar stays */
+.detail-page { display: none; }
+.detail-page.active { display: block; }
+.detail-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--grey); cursor: pointer; transition: color 0.15s; margin-bottom: 20px; }
+.detail-back:hover { color: var(--gold); }
+
+/* Membership ID card */
+.member-card { background: linear-gradient(135deg, #1A1A1A, #111111); border: 1px solid rgba(201,168,76,0.2); border-radius: 16px; padding: 32px; display: flex; gap: 28px; position: relative; overflow: hidden; }
+.member-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold)); }
+.member-card::after { content: 'TTMC'; position: absolute; right: 24px; top: 50%; transform: translateY(-50%); font-size: 80px; font-weight: 800; color: rgba(201,168,76,0.04); letter-spacing: 8px; }
+.member-card-photo { width: 100px; height: 100px; border-radius: 12px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 32px; color: var(--grey-muted); flex-shrink: 0; }
+.member-card-info { flex: 1; position: relative; z-index: 1; }
+.member-card-name { font-size: 24px; font-weight: 700; margin-bottom: 2px; }
+.member-card-id { font-size: 11px; letter-spacing: 3px; color: var(--gold); margin-bottom: 12px; }
+.member-card-car { font-size: 15px; color: var(--grey); margin-bottom: 16px; }
+.member-card-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.member-card-field { }
+.member-card-field-label { font-size: 9px; letter-spacing: 2px; color: var(--grey-muted); margin-bottom: 2px; }
+.member-card-field-value { font-size: 13px; font-weight: 500; }
+.member-card-qr { width: 80px; height: 80px; background: rgba(255,255,255,0.06); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--border); }
+.member-card-qr svg { width: 56px; height: 56px; }
+
+/* Photo upload */
+.photo-upload { width: 100px; height: 100px; border-radius: 12px; background: rgba(255,255,255,0.06); border: 2px dashed rgba(201,168,76,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; overflow: hidden; position: relative; }
+.photo-upload:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
+.photo-upload-icon { font-size: 24px; color: var(--grey-muted); margin-bottom: 4px; }
+.photo-upload-text { font-size: 9px; letter-spacing: 1px; color: var(--grey-muted); }
+.photo-upload img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo-upload.has-photo { border-style: solid; border-color: rgba(201,168,76,0.3); }
+
+/* Detail pages — render inside .main, not as overlay */
+.applicant-header { display: flex; gap: 24px; align-items: flex-start; background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; }
+.applicant-info { flex: 1; }
+.applicant-name { font-size: 22px; font-weight: 700; margin-bottom: 2px; }
+.applicant-date { font-size: 12px; color: var(--grey-muted); margin-bottom: 12px; }
+.applicant-details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.applicant-detail { }
+.applicant-detail-label { font-size: 9px; letter-spacing: 2px; color: var(--grey-muted); margin-bottom: 2px; }
+.applicant-detail-value { font-size: 14px; }
+.applicant-detail-value a { color: var(--gold); text-decoration: none; }
+.applicant-actions-bar { display: flex; gap: 10px; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+/* Profile sections */
+.profile-section { margin-top: 32px; }
+.profile-section-title { font-size: 12px; letter-spacing: 2px; color: var(--gold); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.profile-field { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.profile-field-label { font-size: 9px; letter-spacing: 2px; color: var(--grey-muted); margin-bottom: 4px; }
+.profile-field-value { font-size: 14px; font-weight: 500; }
+.profile-field-value a { color: var(--gold); text-decoration: none; }
+
+/* Activity timeline */
+.activity-timeline { position: relative; padding-left: 24px; }
+.activity-timeline::before { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 2px; background: rgba(201,168,76,0.12); border-radius: 1px; }
+.activity-item { position: relative; margin-bottom: 20px; }
+.activity-item::before { content: ''; position: absolute; left: -20px; top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--gold); background: var(--bg); }
+.activity-item-date { font-size: 11px; color: var(--grey-muted); margin-bottom: 2px; }
+.activity-item-text { font-size: 13px; color: var(--grey); }
+.activity-item-text strong { color: var(--white); font-weight: 600; }
+
+/* Events attended grid */
+.events-attended { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.event-attended-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+.event-attended-name { font-size: 13px; font-weight: 600; }
+.event-attended-date { font-size: 11px; color: var(--grey-muted); }
+
+/* Profile tabs */
+.profile-tabs { display: flex; gap: 4px; margin-top: 32px; margin-bottom: 24px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; width: fit-content; }
+.profile-tab { padding: 8px 20px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--grey); cursor: pointer; transition: all 0.15s; }
+.profile-tab:hover { color: var(--white); }
+.profile-tab.active { background: rgba(201,168,76,0.15); color: var(--gold); }
+.profile-tab-content { display: none; }
+.profile-tab-content.active { display: block; }
+
+/* Admin notes */
+.admin-notes { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; min-height: 100px; color: var(--grey); font-family: 'Outfit'; font-size: 13px; width: 100%; resize: vertical; outline: none; }
+.admin-notes:focus { border-color: var(--gold); }
+
+/* Action buttons row */
+.profile-actions { display: flex; gap: 8px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+/* Action dropdown */
+.action-menu { position: relative; display: inline-block; }
+.action-menu-btn { background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 10px; color: var(--grey); cursor: pointer; font-family: 'Outfit'; transition: all 0.15s; }
+.action-menu-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--white); }
+.action-menu-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; min-width: 160px; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.action-menu.open .action-menu-dropdown { display: block; }
+.action-menu-item { padding: 8px 12px; font-size: 12px; color: var(--grey); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 8px; transition: all 0.1s; }
+.action-menu-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.action-menu-item.danger { color: #ef4444; }
+.action-menu-item.danger:hover { background: rgba(239,68,68,0.1); }
+.action-menu-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* Share card preview */
+.share-preview { background: linear-gradient(135deg, #111111, #0A0A0A); border: 1px solid rgba(201,168,76,0.2); border-radius: 16px; padding: 32px; text-align: center; position: relative; overflow: hidden; max-width: 400px; }
+.share-preview::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold)); }
+.share-preview-logo { font-size: 10px; letter-spacing: 5px; color: var(--gold); margin-bottom: 20px; }
+.share-preview-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.share-preview-subtitle { font-size: 13px; color: var(--grey); margin-bottom: 16px; }
+.share-preview-meta { display: flex; justify-content: center; gap: 20px; font-size: 11px; color: var(--grey-muted); margin-bottom: 20px; }
+.share-preview-cta { display: inline-block; padding: 10px 24px; border: 1px solid var(--gold); color: var(--gold); font-size: 10px; letter-spacing: 3px; font-weight: 600; border-radius: 8px; }
+.share-preview-footer { font-size: 9px; letter-spacing: 2px; color: var(--grey-muted); margin-top: 20px; }
+.share-preview-partner { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; }
+.share-preview-partner-logo { width: 48px; height: 48px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--grey-muted); }
+.share-preview-x { font-size: 14px; color: var(--grey-muted); }
+.share-buttons { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.share-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--grey); font-family: 'Outfit'; transition: all 0.15s; }
+.share-btn:hover { border-color: rgba(255,255,255,0.15); color: var(--white); }
+
+/* Notification dot */
+.notif-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); display: inline-block; margin-left: 4px; animation: pulse-dot 2s ease-in-out infinite; }
+@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* Approval banner */
+.approval-banner { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2); border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.approval-banner-text { font-size: 13px; color: #eab308; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-dot">T</div>
+    <div class="sidebar-logo-text">TTMC CRM</div>
+  </div>
+
+  <div class="sidebar-section">MANAGEMENT</div>
+  <div class="sidebar-link active" onclick="showPage('applications')">
+    <span>&#9993;</span> Applications <span class="badge">3</span>
+  </div>
+  <div class="sidebar-link" onclick="showPage('members')">
+    <span>&#9734;</span> Members
+  </div>
+  <div class="sidebar-link" onclick="showPage('events')">
+    <span>&#9851;</span> Events <span class="notif-dot"></span>
+  </div>
+  <div class="sidebar-link" onclick="showPage('partners')">
+    <span>&#9830;</span> Partners
+  </div>
+
+  <div class="sidebar-section">SETTINGS</div>
+  <div class="sidebar-link">
+    <span>&#9881;</span> Settings
+  </div>
+
+  <div class="sidebar-role">
+    <div class="sidebar-role-label">ADMIN</div>
+    <div class="sidebar-role-name">Seva Kogan</div>
+    <div class="sidebar-role-email">seva@thelevelteam.com</div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main">
+
+  <!-- ===== APPLICATIONS PAGE ===== -->
+  <div class="page active" id="page-applications">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Applications</div>
+        <div class="page-subtitle">Review and approve membership applications</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">PENDING</div>
+        <div class="stat-card-value">3</div>
+        <div class="stat-card-change">+2 today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">APPROVED THIS WEEK</div>
+        <div class="stat-card-value">7</div>
+        <div class="stat-card-change">+3 vs last week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">REJECTED</div>
+        <div class="stat-card-value">2</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">TOTAL ALL TIME</div>
+        <div class="stat-card-value">48</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active">New (3)</div>
+      <div class="tab">Pre-Approved</div>
+      <div class="tab">Awaiting Full Approval</div>
+      <div class="tab">Awaiting Payment</div>
+      <div class="tab">Rejected</div>
+    </div>
+
+    <div class="app-card" onclick="openApplicant('marco')">
+      <div class="app-card-info">
+        <h3>Marco Torres</h3>
+        <div class="app-card-meta">
+          <span>marco@email.com</span>
+          <span>&#127950; 2024 Porsche 992 GT3</span>
+          <span>&#128247; @marco.drives</span>
+          <span>Source: Instagram</span>
+        </div>
+      </div>
+      <div class="app-card-actions">
+        <button class="btn btn-approve" onclick="event.stopPropagation();">Pre-Approve</button>
+        <button class="btn btn-reject" onclick="event.stopPropagation()">Reject</button>
+      </div>
+    </div>
+
+    <div class="app-card" onclick="openApplicant('diana')">
+      <div class="app-card-info">
+        <h3>Diana Kim</h3>
+        <div class="app-card-meta">
+          <span>diana@email.com</span>
+          <span>&#127950; 2023 Range Rover SV</span>
+          <span>&#128247; @diana.luxe</span>
+          <span>Source: Friend referral</span>
+        </div>
+      </div>
+      <div class="app-card-actions">
+        <button class="btn btn-approve" onclick="event.stopPropagation();">Pre-Approve</button>
+        <button class="btn btn-reject" onclick="event.stopPropagation()">Reject</button>
+      </div>
+    </div>
+
+    <div class="app-card" onclick="openApplicant('alex')">
+      <div class="app-card-info">
+        <h3>Alex Rivera</h3>
+        <div class="app-card-meta">
+          <span>alex@email.com</span>
+          <span>&#127950; 2024 McLaren 720S</span>
+          <span>&#128247; @alex.miami</span>
+          <span>Source: TTMC event</span>
+        </div>
+      </div>
+      <div class="app-card-actions">
+        <button class="btn btn-approve" onclick="event.stopPropagation();">Pre-Approve</button>
+        <button class="btn btn-reject" onclick="event.stopPropagation()">Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MEMBERS PAGE ===== -->
+  <div class="page" id="page-members">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Members</div>
+        <div class="page-subtitle">50 vetted members in the network</div>
+      </div>
+      <button class="btn btn-gold">+ Add Member</button>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <div class="table-header-title">All Members</div>
+        <input class="table-search" placeholder="Search by name, email, car..." />
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>NAME</th>
+            <th>EMAIL</th>
+            <th>CAR</th>
+            <th>TIER</th>
+            <th>STATUS</th>
+            <th>JOINED</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="clickable" onclick="openProfile('marco')">
+            <td style="font-weight:600">Marco Torres</td>
+            <td style="color:var(--grey)">marco@email.com</td>
+            <td>992 GT3</td>
+            <td><span class="badge badge-vip">VIP</span></td>
+            <td><span class="badge badge-active">ACTIVE</span></td>
+            <td style="color:var(--grey)">Mar 15, 2026</td>
+          </tr>
+          <tr class="clickable" onclick="openProfile('marco')">
+            <td style="font-weight:600">Diana Kim</td>
+            <td style="color:var(--grey)">diana@email.com</td>
+            <td>Range Rover SV</td>
+            <td><span class="badge badge-core">CORE</span></td>
+            <td><span class="badge badge-active">ACTIVE</span></td>
+            <td style="color:var(--grey)">Mar 10, 2026</td>
+          </tr>
+          <tr class="clickable" onclick="openProfile('marco')">
+            <td style="font-weight:600">Alex Rivera</td>
+            <td style="color:var(--grey)">alex@email.com</td>
+            <td>McLaren 720S</td>
+            <td><span class="badge badge-sc">STRATEGIC</span></td>
+            <td><span class="badge badge-active">ACTIVE</span></td>
+            <td style="color:var(--grey)">Feb 28, 2026</td>
+          </tr>
+          <tr class="clickable" onclick="openProfile('marco')">
+            <td style="font-weight:600">James Chen</td>
+            <td style="color:var(--grey)">james@email.com</td>
+            <td>Ferrari F8 Tributo</td>
+            <td><span class="badge badge-vip">VIP</span></td>
+            <td><span class="badge badge-active">ACTIVE</span></td>
+            <td style="color:var(--grey)">Feb 20, 2026</td>
+          </tr>
+          <tr class="clickable" onclick="openProfile('marco')">
+            <td style="font-weight:600">Sofia Martinez</td>
+            <td style="color:var(--grey)">sofia@email.com</td>
+            <td>Lamborghini Huracan</td>
+            <td><span class="badge badge-core">CORE</span></td>
+            <td><span class="badge badge-active">ACTIVE</span></td>
+            <td style="color:var(--grey)">Feb 14, 2026</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== EVENTS PAGE ===== -->
+  <div class="page" id="page-events">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Events</div>
+        <div class="page-subtitle">Create and manage events</div>
+      </div>
+      <button class="btn btn-gold" onclick="document.getElementById('event-modal').classList.add('show')">+ Create Event</button>
+    </div>
+
+    <!-- Pending approval banner (for event manager role) -->
+    <div class="approval-banner">
+      <div class="approval-banner-text">&#9888; 1 event pending admin approval</div>
+      <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;">View</button>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <div class="tabs" style="margin-bottom:0">
+          <div class="tab active">Upcoming</div>
+          <div class="tab">Past</div>
+          <div class="tab">Drafts</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>EVENT</th>
+            <th>DATE</th>
+            <th>LOCATION</th>
+            <th>TYPE</th>
+            <th>RSVP</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="clickable" onclick="showDetail('event-detail')">
+            <td><div style="display:flex;align-items:center;gap:12px;"><div style="width:48px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.04);"><img src="/images/ttmc-event.jpg" style="width:100%;height:100%;object-fit:cover;" alt=""></div><span style="font-weight:600">TTMC x Shift Arcade Takeover</span></div></td>
+            <td>May 15, 2026</td>
+            <td style="color:var(--grey)">Shift Arcade, Wynwood</td>
+            <td><span class="badge badge-core">VENUE</span></td>
+            <td>18/30</td>
+            <td><span class="badge badge-approved">APPROVED</span></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('event-detail')">
+            <td><div style="display:flex;align-items:center;gap:12px;"><div style="width:48px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.04);"><img src="/images/event-miami-beach-cruise.jpg" style="width:100%;height:100%;object-fit:cover;" alt=""></div><span style="font-weight:600">Midnight Run: Key Biscayne</span></div></td>
+            <td>Apr 20, 2026</td>
+            <td style="color:var(--grey)">Brickell start</td>
+            <td><span class="badge badge-vip">NIGHT RUN</span></td>
+            <td>22/25</td>
+            <td><span class="badge badge-approved">APPROVED</span></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('event-detail')">
+            <td><div style="display:flex;align-items:center;gap:12px;"><div style="width:48px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.04);border:1px dashed rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:var(--grey-muted)">&#128247;</span></div><span style="font-weight:600">Founders Circle Q2</span></div></td>
+            <td>Jun 1, 2026</td>
+            <td style="color:var(--grey)">TBD</td>
+            <td><span class="badge badge-sc">INNER CIRCLE</span></td>
+            <td>0/12</td>
+            <td><span class="badge badge-review">PENDING REVIEW</span></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('event-detail')">
+            <td><div style="display:flex;align-items:center;gap:12px;"><div style="width:48px;height:34px;border-radius:6px;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.04);border:1px dashed rgba(201,168,76,0.2);display:flex;align-items:center;justify-content:center;"><span style="font-size:12px;color:var(--grey-muted)">&#128247;</span></div><span style="font-weight:600">Summer Yacht Day</span></div></td>
+            <td>Jul 4, 2026</td>
+            <td style="color:var(--grey)">Miami Beach Marina</td>
+            <td><span class="badge badge-core">SPECIAL</span></td>
+            <td>0/20</td>
+            <td><span class="badge badge-draft">DRAFT</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== PARTNERS PAGE ===== -->
+  <div class="page" id="page-partners">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Partners</div>
+        <div class="page-subtitle">Manage sponsor network and perks</div>
+      </div>
+      <button class="btn btn-gold" onclick="document.getElementById('partner-modal').classList.add('show')">+ Add Partner</button>
+    </div>
+
+    <div class="approval-banner">
+      <div class="approval-banner-text">&#9888; 2 partner updates pending your approval</div>
+      <button class="btn btn-outline" style="font-size:11px;padding:6px 12px;">Review</button>
+    </div>
+
+    <div class="table-container">
+      <div class="table-header">
+        <div class="tabs" style="margin-bottom:0">
+          <div class="tab active">All Partners</div>
+          <div class="tab">Automotive</div>
+          <div class="tab">Dining</div>
+          <div class="tab">Lifestyle</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>PARTNER</th>
+            <th>CATEGORY</th>
+            <th>DISCOUNT</th>
+            <th>MANAGED BY</th>
+            <th>ACTIVE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="clickable" onclick="showDetail('partner-detail')">
+            <td style="font-weight:600">LuxeShine Detailing</td>
+            <td>Automotive</td>
+            <td><span class="badge badge-core">25% OFF</span></td>
+            <td style="color:var(--grey)">luxeshine@email.com <span class="role-tag role-partner">PARTNER</span></td>
+            <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('partner-detail')">
+            <td style="font-weight:600">TuneHaus</td>
+            <td>Automotive</td>
+            <td><span class="badge badge-core">15% OFF</span></td>
+            <td style="color:var(--grey)">tunehaus@email.com <span class="role-tag role-partner">PARTNER</span></td>
+            <td><div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('partner-detail')">
+            <td style="font-weight:600">Nick Castle's</td>
+            <td>Dining</td>
+            <td><span class="badge badge-core">COMP TABLE</span></td>
+            <td style="color:var(--grey)">&#8212;</td>
+            <td><div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('partner-detail')">
+            <td style="font-weight:600">Shift Arcade</td>
+            <td>Lifestyle</td>
+            <td><span class="badge badge-core">FREE SESSION</span></td>
+            <td style="color:var(--grey)">shift@email.com <span class="role-tag role-partner">PARTNER</span></td>
+            <td><div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div></td>
+          </tr>
+          <tr class="clickable" onclick="showDetail('partner-detail')">
+            <td style="font-weight:600">Tint Masters <span class="badge badge-review" style="margin-left:8px">UPDATE PENDING</span></td>
+            <td>Automotive</td>
+            <td><span class="badge badge-core">20% OFF</span></td>
+            <td style="color:var(--grey)">tint@email.com <span class="role-tag role-partner">PARTNER</span></td>
+            <td><div class="toggle on" onclick="event.stopPropagation();this.classList.toggle('on')"></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+  <!-- ===== APPLICANT DETAIL PAGE ===== -->
+  <div class="page detail-page" id="page-applicant-detail">
+    <div class="detail-back" onclick="showPage('applications')">&#8592; Back to Applications</div>
+
+    <div class="applicant-header">
+      <div class="photo-upload" onclick="this.querySelector('input').click()">
+        <div class="photo-upload-icon">&#128247;</div>
+        <div class="photo-upload-text">ADD PHOTO</div>
+        <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+      </div>
+      <div class="applicant-info">
+        <div class="applicant-name">Marco Torres</div>
+        <div class="applicant-date"><span class="badge badge-pending">PENDING</span> &nbsp; Applied Mar 12, 2026</div>
+        <div class="applicant-details-grid">
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">EMAIL</div>
+            <div class="applicant-detail-value"><a href="#">marco@email.com</a></div>
+          </div>
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">PHONE</div>
+            <div class="applicant-detail-value">+1 (305) 555-0147</div>
+          </div>
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">INSTAGRAM</div>
+            <div class="applicant-detail-value"><a href="#">@marco.drives</a></div>
+          </div>
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">SOURCE</div>
+            <div class="applicant-detail-value">Instagram</div>
+          </div>
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">CAR</div>
+            <div class="applicant-detail-value">2024 Porsche 992 GT3</div>
+          </div>
+          <div class="applicant-detail">
+            <div class="applicant-detail-label">MODIFICATIONS</div>
+            <div class="applicant-detail-value">Full Akrapovic exhaust, KW V3 coilovers</div>
+          </div>
+        </div>
+        <div class="profile-section" style="margin-top:20px">
+          <div class="profile-section-title">ADMIN NOTES</div>
+          <textarea class="admin-notes" placeholder="Add notes about this applicant..."></textarea>
+        </div>
+        <!-- Onboarding status tracker -->
+        <div class="profile-section" style="margin-top:20px;">
+          <div class="profile-section-title">ONBOARDING STATUS</div>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <div style="flex:1;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:4px;">&#10003;</div>
+              <div style="font-size:10px;letter-spacing:1px;color:#22c55e;font-weight:600;">1. APPLIED</div>
+              <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Mar 12</div>
+            </div>
+            <div style="flex:1;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:14px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:4px;">&#9679;</div>
+              <div style="font-size:10px;letter-spacing:1px;color:#eab308;font-weight:600;">2. PRE-APPROVE</div>
+              <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Awaiting you</div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
+              <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">3. TIER + DOCS</div>
+              <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Applicant selects tier, signs contract, uploads DL</div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
+              <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">4. FULL APPROVE</div>
+              <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">You review docs &amp; approve</div>
+            </div>
+            <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
+              <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">5. PAY + ACCESS</div>
+              <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Signs invoice, pays, auto-login</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="applicant-actions-bar">
+          <button class="btn btn-approve">&#10003; Pre-Approve (sends tier selection to applicant)</button>
+          <button class="btn btn-reject">Reject Application</button>
+          <button class="btn btn-outline">Send Email</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MEMBER DETAIL PAGE ===== -->
+  <div class="page detail-page" id="page-member-detail">
+    <div class="detail-back" onclick="showPage('members')">&#8592; Back to Members</div>
+
+    <!-- Membership ID Card -->
+    <div class="member-card">
+      <div class="photo-upload" onclick="this.querySelector('input').click()" style="width:100px;height:100px;">
+        <div class="photo-upload-icon">&#128100;</div>
+        <div class="photo-upload-text">UPLOAD</div>
+        <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+      </div>
+      <div class="member-card-info">
+        <div class="member-card-name">Marco Torres</div>
+        <div class="member-card-id">TTMC-00017</div>
+        <div class="member-card-car">&#127950; 2024 Porsche 992 GT3 &mdash; Chalk White, Full Akrapovic exhaust, lowered</div>
+        <div class="member-card-row">
+          <div class="member-card-field">
+            <div class="member-card-field-label">TIER</div>
+            <div class="member-card-field-value"><span class="badge badge-vip">VIP</span></div>
+          </div>
+          <div class="member-card-field">
+            <div class="member-card-field-label">STATUS</div>
+            <div class="member-card-field-value"><span class="badge badge-active">ACTIVE</span></div>
+          </div>
+          <div class="member-card-field">
+            <div class="member-card-field-label">MEMBER SINCE</div>
+            <div class="member-card-field-value">Mar 15, 2026</div>
+          </div>
+          <div class="member-card-field">
+            <div class="member-card-field-label">EXPIRES</div>
+            <div class="member-card-field-value">Mar 15, 2027</div>
+          </div>
+        </div>
+      </div>
+      <div class="member-card-qr">
+        <svg viewBox="0 0 100 100" fill="none">
+          <rect x="10" y="10" width="25" height="25" rx="3" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
+          <rect x="65" y="10" width="25" height="25" rx="3" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
+          <rect x="10" y="65" width="25" height="25" rx="3" stroke="rgba(201,168,76,0.4)" stroke-width="2"/>
+          <rect x="16" y="16" width="13" height="13" rx="2" fill="rgba(201,168,76,0.3)"/>
+          <rect x="71" y="16" width="13" height="13" rx="2" fill="rgba(201,168,76,0.3)"/>
+          <rect x="16" y="71" width="13" height="13" rx="2" fill="rgba(201,168,76,0.3)"/>
+          <rect x="42" y="10" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="42" y="22" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="50" y="16" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="42" y="42" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="50" y="42" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="42" y="50" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="65" y="42" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="77" y="50" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="65" y="65" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="77" y="71" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="83" y="83" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="71" y="83" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="50" y="65" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+          <rect x="42" y="77" width="6" height="6" fill="rgba(201,168,76,0.2)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Profile Tabs -->
+    <div class="profile-tabs">
+      <div class="profile-tab active" onclick="showProfileTab('overview')">Overview</div>
+      <div class="profile-tab" onclick="showProfileTab('activity')">Activity</div>
+      <div class="profile-tab" onclick="showProfileTab('events')">Events (8)</div>
+      <div class="profile-tab" onclick="showProfileTab('financials')">Financials</div>
+      <div class="profile-tab" onclick="showProfileTab('garage')">Garage</div>
+      <div class="profile-tab" onclick="showProfileTab('documents')">Documents</div>
+    </div>
+
+    <!-- Tab: Overview -->
+    <div class="profile-tab-content active" id="ptab-overview">
+      <div class="profile-section">
+        <div class="profile-section-title">CONTACT INFORMATION</div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <div class="profile-field-label">EMAIL</div>
+            <div class="profile-field-value"><a href="#">marco@email.com</a></div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">PHONE</div>
+            <div class="profile-field-value">+1 (305) 555-0147</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">INSTAGRAM</div>
+            <div class="profile-field-value"><a href="#">@marco.drives</a></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">VEHICLE DETAILS</div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <div class="profile-field-label">YEAR / MAKE / MODEL</div>
+            <div class="profile-field-value">2024 Porsche 992 GT3</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">COLOR</div>
+            <div class="profile-field-value">Chalk White</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">MODIFICATIONS</div>
+            <div class="profile-field-value">Full Akrapovic exhaust, KW V3 coilovers, Xpel PPF</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">APPLICATION DETAILS</div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <div class="profile-field-label">APPLIED</div>
+            <div class="profile-field-value">Mar 12, 2026</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">APPROVED</div>
+            <div class="profile-field-value">Mar 15, 2026</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">SOURCE</div>
+            <div class="profile-field-value">Instagram</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">MEMBERSHIP</div>
+        <div class="profile-grid">
+          <div class="profile-field">
+            <div class="profile-field-label">TIER</div>
+            <div class="profile-field-value"><span class="badge badge-vip">VIP</span> &mdash; $3,000/yr</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">PAYMENT STATUS</div>
+            <div class="profile-field-value"><span class="badge badge-active">PAID</span></div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">MEMBER ID</div>
+            <div class="profile-field-value" style="color:var(--gold)">TTMC-00017</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">ADMIN NOTES</div>
+        <textarea class="admin-notes" placeholder="Add internal notes about this member...">Great member. Always shows up early. Connected us with two new sponsors. Upgrade to SC candidate for Q3.</textarea>
+      </div>
+
+      <div class="profile-actions">
+        <button class="btn btn-outline">Change Tier</button>
+        <button class="btn btn-outline">Suspend Membership</button>
+        <button class="btn btn-outline">Send Email</button>
+        <button class="btn btn-reject" style="margin-left:auto">Terminate</button>
+      </div>
+    </div>
+
+    <!-- Tab: Activity -->
+    <div class="profile-tab-content" id="ptab-activity">
+      <div class="profile-section">
+        <div class="profile-section-title">COMPLETE ACTIVITY HISTORY</div>
+        <div class="activity-timeline">
+          <div class="activity-item">
+            <div class="activity-item-date">Apr 20, 2026</div>
+            <div class="activity-item-text"><strong>Attended</strong> Midnight Run: Key Biscayne</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Apr 5, 2026</div>
+            <div class="activity-item-text"><strong>RSVP'd</strong> for Midnight Run: Key Biscayne</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 28, 2026</div>
+            <div class="activity-item-text"><strong>Attended</strong> Nick Castle's VIP Night</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 22, 2026</div>
+            <div class="activity-item-text"><strong>Used perk:</strong> LuxeShine Detailing &mdash; 25% OFF ceramic coating</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 18, 2026</div>
+            <div class="activity-item-text"><strong>Attended</strong> SCS x Hard Rock Cruise (first event)</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 15, 2026</div>
+            <div class="activity-item-text"><strong>Membership activated</strong> &mdash; VIP tier, payment confirmed ($3,000)</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 15, 2026</div>
+            <div class="activity-item-text"><strong>Approved</strong> by Seva Kogan &mdash; assigned to VIP tier</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 14, 2026</div>
+            <div class="activity-item-text"><strong>Contract signed</strong> &mdash; membership agreement accepted</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 13, 2026</div>
+            <div class="activity-item-text"><strong>Pre-approved</strong> &mdash; full application completed</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-item-date">Mar 12, 2026</div>
+            <div class="activity-item-text"><strong>Application submitted</strong> &mdash; 2024 Porsche 992 GT3, source: Instagram</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Events -->
+    <div class="profile-tab-content" id="ptab-events">
+      <div class="profile-section">
+        <div class="profile-section-title">EVENTS ATTENDED (8)</div>
+        <div class="events-attended">
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Midnight Run: Key Biscayne</div>
+              <div class="event-attended-date"><span class="badge badge-vip" style="font-size:9px">NIGHT RUN</span></div>
+            </div>
+            <div class="event-attended-date">Apr 20, 2026</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Nick Castle's VIP Night</div>
+              <div class="event-attended-date"><span class="badge badge-sc" style="font-size:9px">DINNER</span></div>
+            </div>
+            <div class="event-attended-date">Mar 28, 2026</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">SCS x Hard Rock Cruise</div>
+              <div class="event-attended-date"><span class="badge badge-core" style="font-size:9px">COLLAB</span></div>
+            </div>
+            <div class="event-attended-date">Mar 18, 2026</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Wynwood Art Basel Run</div>
+              <div class="event-attended-date"><span class="badge badge-pending" style="font-size:9px">SPECIAL</span></div>
+            </div>
+            <div class="event-attended-date">Dec 5, 2025</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Track Day: Homestead</div>
+              <div class="event-attended-date"><span class="badge badge-vip" style="font-size:9px">TRACK</span></div>
+            </div>
+            <div class="event-attended-date">Nov 22, 2025</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Founders Circle Q4</div>
+              <div class="event-attended-date"><span class="badge badge-sc" style="font-size:9px">INNER CIRCLE</span></div>
+            </div>
+            <div class="event-attended-date">Nov 15, 2025</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">Miami Beach Sunset Cruise</div>
+              <div class="event-attended-date"><span class="badge badge-core" style="font-size:9px">CRUISE</span></div>
+            </div>
+            <div class="event-attended-date">Oct 30, 2025</div>
+          </div>
+          <div class="event-attended-card">
+            <div>
+              <div class="event-attended-name">TTMC x Shift Arcade V1</div>
+              <div class="event-attended-date"><span class="badge badge-core" style="font-size:9px">VENUE</span></div>
+            </div>
+            <div class="event-attended-date">Oct 12, 2025</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Documents -->
+    <!-- Tab: Financials -->
+    <div class="profile-tab-content" id="ptab-financials">
+      <div class="profile-section">
+        <div class="profile-section-title">FINANCIAL SUMMARY</div>
+        <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+          <div class="stat-card">
+            <div class="stat-card-label">TOTAL PAID</div>
+            <div class="stat-card-value">$3,000</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">NEXT PAYMENT</div>
+            <div class="stat-card-value" style="font-size:18px">Mar 15, 2027</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">PAYMENT METHOD</div>
+            <div class="stat-card-value" style="font-size:16px">Visa ****4242</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">STATUS</div>
+            <div class="stat-card-value"><span class="badge badge-active">CURRENT</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">CHARGES &amp; INVOICES</div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>DESCRIPTION</th>
+                <th>AMOUNT</th>
+                <th>STATUS</th>
+                <th>INVOICE</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--grey)">Mar 15, 2026</td>
+                <td style="font-weight:600">VIP Membership — Annual</td>
+                <td style="color:var(--gold);font-weight:600">$3,000.00</td>
+                <td><span class="badge badge-active">PAID</span></td>
+                <td>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#8595; Download</button>
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#9993; Email</button>
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#128279; Share</button>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="color:var(--grey)">Mar 14, 2026</td>
+                <td style="font-weight:600">Application Fee</td>
+                <td style="color:var(--gold);font-weight:600">$0.00</td>
+                <td><span class="badge badge-active">WAIVED</span></td>
+                <td>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#8595; Download</button>
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#9993; Email</button>
+                    <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">&#128279; Share</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-gold">+ Add Charge</button>
+          <button class="btn btn-outline">Generate Invoice</button>
+          <button class="btn btn-outline">Email All Invoices</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Garage -->
+    <div class="profile-tab-content" id="ptab-garage">
+      <div class="profile-section">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="profile-section-title" style="border:none;padding:0;margin:0">THE GARAGE</div>
+          <button class="btn btn-gold" style="font-size:11px">+ Add Vehicle</button>
+        </div>
+
+        <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <!-- Car 1 — Primary -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+            <div style="position:relative;height:180px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <div class="photo-upload" onclick="this.querySelector('input').click()" style="width:100%;height:100%;border:none;border-radius:0;">
+                <div class="photo-upload-icon" style="font-size:36px">&#128663;</div>
+                <div class="photo-upload-text">UPLOAD CAR PHOTO</div>
+                <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+              </div>
+              <div style="position:absolute;top:10px;right:10px;"><span class="badge badge-vip">PRIMARY</span></div>
+            </div>
+            <div style="padding:16px;">
+              <div style="font-weight:700;font-size:16px;margin-bottom:4px;">2024 Porsche 992 GT3</div>
+              <div style="font-size:12px;color:var(--grey);margin-bottom:8px;">Chalk White &bull; Full Akrapovic exhaust &bull; KW V3 coilovers &bull; Xpel PPF</div>
+              <div style="display:flex;gap:12px;font-size:11px;color:var(--grey-muted);">
+                <span>&#128203; FL TAG: TTMC-GT3</span>
+                <span>VIN: WP0A...7832</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:12px;">
+                <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">Edit</button>
+                <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">Upload More Photos</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Car 2 — Secondary -->
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+            <div style="position:relative;height:180px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+              <div class="photo-upload" onclick="this.querySelector('input').click()" style="width:100%;height:100%;border:none;border-radius:0;">
+                <div class="photo-upload-icon" style="font-size:36px">&#128663;</div>
+                <div class="photo-upload-text">UPLOAD CAR PHOTO</div>
+                <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+              </div>
+            </div>
+            <div style="padding:16px;">
+              <div style="font-weight:700;font-size:16px;margin-bottom:4px;">2023 Mercedes AMG GT63S</div>
+              <div style="font-size:12px;color:var(--grey);margin-bottom:8px;">Obsidian Black &bull; Stock &bull; Daily driver</div>
+              <div style="display:flex;gap:12px;font-size:11px;color:var(--grey-muted);">
+                <span>&#128203; FL TAG: TTMC-AMG</span>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:12px;">
+                <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">Edit</button>
+                <button class="btn btn-outline" style="font-size:10px;padding:4px 10px;">Upload More Photos</button>
+                <button class="btn btn-reject" style="font-size:10px;padding:4px 10px;">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-tab-content" id="ptab-documents">
+      <!-- Membership contract — featured prominently -->
+      <div class="profile-section">
+        <div class="profile-section-title">MEMBERSHIP CONTRACT</div>
+        <div style="background:var(--bg2);border:1px solid rgba(201,168,76,0.2);border-radius:14px;padding:24px;display:flex;gap:20px;align-items:flex-start;">
+          <div style="width:64px;height:80px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span style="font-size:28px;opacity:0.5;">&#128196;</span>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <span style="font-size:15px;font-weight:700;">TTMC VIP Membership Agreement</span>
+              <span class="badge badge-active">SIGNED</span>
+            </div>
+            <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Contract ID: TTMC-C-2026-00017</div>
+            <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Signed: Mar 14, 2026 at 2:34 PM EST</div>
+            <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Term: Mar 15, 2026 — Mar 15, 2027 (Annual)</div>
+            <div style="font-size:12px;color:var(--grey);">IP: 24.118.xxx.xxx &bull; Device: iPhone 15 Pro, Safari</div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#128196; View Contract</button>
+              <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#8595; Download PDF</button>
+              <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#9993; Email to Member</button>
+              <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#128279; Share Link</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">IDENTITY &amp; VERIFICATION</div>
+        <div class="profile-grid" style="grid-template-columns:1fr 1fr">
+          <div class="profile-field" style="text-align:center;padding:24px;">
+            <div style="font-size:40px;margin-bottom:8px;opacity:0.3">&#128179;</div>
+            <div class="profile-field-label" style="margin-bottom:8px">DRIVER'S LICENSE</div>
+            <div class="profile-field-value"><span class="badge badge-active">VERIFIED</span></div>
+            <div style="font-size:11px;color:var(--grey-muted);margin-top:8px">Uploaded Mar 14, 2026</div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">View</button>
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">&#8595; Download</button>
+            </div>
+          </div>
+          <div class="profile-field" style="text-align:center;padding:24px;">
+            <div style="font-size:40px;margin-bottom:8px;opacity:0.3">&#128663;</div>
+            <div class="profile-field-label" style="margin-bottom:8px">VEHICLE REGISTRATION</div>
+            <div class="profile-field-value"><span class="badge badge-active">VERIFIED</span></div>
+            <div style="font-size:11px;color:var(--grey-muted);margin-top:8px">Uploaded Mar 14, 2026</div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">View</button>
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">&#8595; Download</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="profile-section-title">SIGNED AGREEMENTS</div>
+        <div class="profile-grid" style="grid-template-columns:1fr 1fr">
+          <div class="profile-field" style="text-align:center;padding:24px;">
+            <div style="font-size:40px;margin-bottom:8px;opacity:0.3">&#9888;</div>
+            <div class="profile-field-label" style="margin-bottom:8px">LIABILITY WAIVER</div>
+            <div class="profile-field-value"><span class="badge badge-active">SIGNED</span></div>
+            <div style="font-size:11px;color:var(--grey-muted);margin-top:8px">Signed Mar 14, 2026</div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">View</button>
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">&#8595; Download</button>
+            </div>
+          </div>
+          <div class="profile-field" style="text-align:center;padding:24px;">
+            <div style="font-size:40px;margin-bottom:8px;opacity:0.3">&#128203;</div>
+            <div class="profile-field-label" style="margin-bottom:8px">CODE OF CONDUCT</div>
+            <div class="profile-field-value"><span class="badge badge-active">ACKNOWLEDGED</span></div>
+            <div style="font-size:11px;color:var(--grey-muted);margin-top:8px">Accepted Mar 14, 2026</div>
+            <div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">
+              <button class="btn btn-outline" style="font-size:10px;padding:5px 12px">View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn btn-gold" style="font-size:11px;">&#43; Request New Signature</button>
+        <button class="btn btn-outline" style="font-size:11px;">&#8595; Download All Documents</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== EVENT DETAIL PAGE ===== -->
+  <div class="page detail-page" id="page-event-detail">
+    <div class="detail-back" onclick="showPage('events')">&#8592; Back to Events</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div class="page-title">TTMC x Shift Arcade Takeover</div>
+        <div class="page-subtitle"><span class="badge badge-core">VENUE ACTIVATION</span> &nbsp; <span class="badge badge-approved">APPROVED</span></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gold" onclick="toggleEventEdit()">&#9998; Edit Event</button>
+        <button class="btn btn-outline">Duplicate</button>
+        <button class="btn btn-reject">Cancel Event</button>
+      </div>
+    </div>
+
+    <!-- 2-column: Cover image left, details right -->
+    <div class="profile-section">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <!-- Left: Cover image -->
+        <div>
+          <div class="form-label" style="margin-bottom:8px;">EVENT COVER IMAGE</div>
+          <div class="photo-upload" onclick="this.querySelector('input').click()" style="width:100%;height:320px;border-radius:12px;">
+            <div class="photo-upload-icon" style="font-size:40px;">&#127912;</div>
+            <div class="photo-upload-text" style="font-size:11px;">UPLOAD COVER IMAGE</div>
+            <div style="font-size:10px;color:var(--grey-muted);margin-top:4px;">This becomes the thumbnail members see</div>
+            <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+          </div>
+        </div>
+
+        <!-- Right: Event fields -->
+        <div>
+          <div class="form-group">
+            <label class="form-label">EVENT NAME</label>
+            <input class="form-input" value="TTMC x Shift Arcade Takeover" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">TYPE</label>
+              <select class="form-input"><option selected>Venue Activation</option><option>Night Run</option><option>Private Dinner</option><option>Collaboration</option><option>Special Event</option><option>Inner Circle</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">DATE</label>
+              <input class="form-input" type="date" value="2026-05-15" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">TIME</label>
+              <input class="form-input" type="time" value="20:00" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">CAPACITY</label>
+              <input class="form-input" type="number" value="30" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">VISIBILITY</label>
+            <select class="form-input"><option>Members Only</option><option selected>Public</option></select>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-gold">Save Changes</button>
+            <button class="btn btn-outline">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Description full width below -->
+      <div class="form-group" style="margin-top:20px;">
+        <label class="form-label">DESCRIPTION</label>
+        <textarea class="admin-notes" style="min-height:80px;">Private sim racing night. Exotics parked outside, music, networking, and a cinematic night run through Wynwood at midnight. Members only.</textarea>
+      </div>
+    </div>
+
+    <!-- Location with maps -->
+    <div class="profile-section">
+      <div class="profile-section-title">LOCATION</div>
+      <div class="form-group">
+        <label class="form-label">ADDRESS</label>
+        <input class="form-input" value="282 NW 27th St, Miami, FL 33127 (Shift Arcade, Wynwood)" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <!-- Google Maps embed -->
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);height:280px;">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3592.7!2d-80.199!3d25.8!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDQ4JzAwLjAiTiA4MMKwMTEnNTYuNCJX!5e0!3m2!1sen!2sus!4v1"
+            width="100%" height="280" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <!-- Google Street View embed -->
+        <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border);height:280px;">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!4v1!6m8!1m7!1s_placeholder!2m2!1d25.8!2d-80.199!3f0!4f0!5f0.7820865974627469"
+            width="100%" height="280" style="border:0;" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <a href="https://www.google.com/maps/dir/?api=1&destination=282+NW+27th+St+Miami+FL+33127" target="_blank" class="btn btn-outline" style="text-decoration:none;">&#128506; Get Directions</a>
+        <a href="https://www.google.com/maps/@25.8,-80.199,3a,75y,0h,90t/data=!3m6!1e1!3m4!1s!2e0!7i16384!8i8192" target="_blank" class="btn btn-outline" style="text-decoration:none;">&#128065; Open Street View</a>
+      </div>
+    </div>
+
+    <!-- RSVP stats -->
+    <div class="profile-section">
+      <div class="profile-section-title">ATTENDANCE</div>
+      <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-card-label">CONFIRMED</div>
+          <div class="stat-card-value" style="color:#22c55e">15</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">WAITLIST</div>
+          <div class="stat-card-value" style="color:#eab308">3</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">CANCELLED</div>
+          <div class="stat-card-value" style="color:#ef4444">2</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">SPOTS LEFT</div>
+          <div class="stat-card-value">12</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="profile-section-title" style="border:none;padding:0;margin:0">RSVP LIST (18)</div>
+        <button class="btn btn-outline" style="font-size:11px;">&#8595; Export CSV</button>
+      </div>
+      <div class="table-container" style="margin-top:12px;">
+        <table>
+          <thead><tr><th>NAME</th><th>TIER</th><th>CAR</th><th>RSVP DATE</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">Marco Torres</td><td><span class="badge badge-vip">VIP</span></td><td>992 GT3</td><td style="color:var(--grey)">Apr 28</td><td><span class="badge badge-active">CONFIRMED</span></td><td>
+              <div class="action-menu" onclick="toggleMenu(this)">
+                <button class="action-menu-btn">Actions &#9662;</button>
+                <div class="action-menu-dropdown">
+                  <div class="action-menu-item">&#10003; Check In</div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#9993; Send Message</div>
+                  <div class="action-menu-divider"></div>
+                  <div class="action-menu-item danger">&#10005; Remove from Event</div>
+                </div>
+              </div>
+            </td></tr>
+            <tr><td style="font-weight:600">Alex Rivera</td><td><span class="badge badge-sc">STRATEGIC</span></td><td>McLaren 720S</td><td style="color:var(--grey)">Apr 27</td><td><span class="badge badge-active">CONFIRMED</span></td><td>
+              <div class="action-menu" onclick="toggleMenu(this)">
+                <button class="action-menu-btn">Actions &#9662;</button>
+                <div class="action-menu-dropdown">
+                  <div class="action-menu-item">&#10003; Check In</div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#9993; Send Message</div>
+                  <div class="action-menu-divider"></div>
+                  <div class="action-menu-item danger">&#10005; Remove from Event</div>
+                </div>
+              </div>
+            </td></tr>
+            <tr><td style="font-weight:600">James Chen</td><td><span class="badge badge-vip">VIP</span></td><td>Ferrari F8</td><td style="color:var(--grey)">Apr 26</td><td><span class="badge badge-active">CONFIRMED</span></td><td>
+              <div class="action-menu" onclick="toggleMenu(this)">
+                <button class="action-menu-btn">Actions &#9662;</button>
+                <div class="action-menu-dropdown">
+                  <div class="action-menu-item">&#10003; Check In</div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#9993; Send Message</div>
+                  <div class="action-menu-divider"></div>
+                  <div class="action-menu-item danger">&#10005; Remove from Event</div>
+                </div>
+              </div>
+            </td></tr>
+            <tr><td style="font-weight:600">Sofia Martinez</td><td><span class="badge badge-core">CORE</span></td><td>Huracan</td><td style="color:var(--grey)">Apr 25</td><td><span class="badge badge-pending">WAITLIST</span></td><td>
+              <div class="action-menu" onclick="toggleMenu(this)">
+                <button class="action-menu-btn">Actions &#9662;</button>
+                <div class="action-menu-dropdown">
+                  <div class="action-menu-item" style="color:#22c55e;">&#9650; Promote to Confirmed</div>
+                  <div class="action-menu-item">&#9993; Send Message</div>
+                  <div class="action-menu-divider"></div>
+                  <div class="action-menu-item danger">&#10005; Decline &amp; Remove</div>
+                </div>
+              </div>
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Share card for event -->
+    <div class="profile-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="profile-section-title" style="border:none;padding:0;margin:0">SHARE THIS EVENT</div>
+      </div>
+      <div style="display:flex;gap:24px;margin-top:16px;align-items:flex-start;">
+        <div class="share-preview">
+          <div class="share-preview-logo">TOP TIER MIAMI CLUB</div>
+          <div class="share-preview-title">TTMC x Shift Arcade Takeover</div>
+          <div class="share-preview-subtitle">Private sim racing + midnight convoy through Wynwood</div>
+          <div class="share-preview-meta">
+            <span>&#128197; May 15, 2026</span>
+            <span>&#128205; Wynwood, Miami</span>
+            <span>&#128663; 30 spots</span>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+            <div class="share-preview-cta">MEMBERS ONLY</div>
+          </div>
+          <div class="share-preview-footer">@TOPTIERMIAMICLUB &bull; TOPTIERMIAMICLUB.COM</div>
+        </div>
+        <div style="flex:1;">
+          <p style="font-size:13px;color:var(--grey);margin-bottom:16px;">Share this event card to social media, text, or download as image.</p>
+          <div class="share-buttons">
+            <button class="share-btn">&#128247; Instagram Story</button>
+            <button class="share-btn">&#127916; TikTok</button>
+            <button class="share-btn">&#128172; iMessage</button>
+            <button class="share-btn">&#128172; WhatsApp</button>
+            <button class="share-btn">&#8595; Download PNG</button>
+            <button class="share-btn">&#128279; Copy Link</button>
+          </div>
+          <div style="margin-top:16px;">
+            <p class="form-label">CUSTOM CAPTION</p>
+            <textarea class="admin-notes" style="min-height:60px;font-size:12px;">Sim racing. Supercars. Midnight convoy. Limited spots. You know the vibe. &#127950;&#128293; DM to apply. @toptiermiamiclub</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PARTNER DETAIL PAGE ===== -->
+  <div class="page detail-page" id="page-partner-detail">
+    <div class="detail-back" onclick="showPage('partners')">&#8592; Back to Partners</div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <div>
+        <div class="page-title">LuxeShine Detailing</div>
+        <div class="page-subtitle"><span class="badge badge-core">AUTOMOTIVE</span> &nbsp; <span class="badge badge-active">ACTIVE</span></div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline">Edit Partner</button>
+        <div class="toggle on" onclick="this.classList.toggle('on')" style="margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-field">
+        <div class="profile-field-label">DISCOUNT</div>
+        <div class="profile-field-value"><span class="badge badge-core">25% OFF</span></div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-label">PARTNER EMAIL</div>
+        <div class="profile-field-value"><a href="#" style="color:var(--gold)">luxeshine@email.com</a></div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-label">WEBSITE</div>
+        <div class="profile-field-value"><a href="#" style="color:var(--gold)">luxeshine.com</a></div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">DESCRIPTION</div>
+      <p style="font-size:14px;color:var(--grey);line-height:1.7;">Ceramic coating, PPF, and full detail packages at member rates. Miami's highest-rated ceramic studio.</p>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">DISCOUNT CODE (MEMBERS ONLY)</div>
+      <div class="profile-field" style="display:inline-block;">
+        <div class="profile-field-value" style="font-family:monospace;font-size:16px;color:var(--gold);letter-spacing:3px;">TTMC-LUXE-25</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">PARTNER ACTIVITY &amp; ENGAGEMENT</div>
+      <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-card-label">REDEMPTIONS</div>
+          <div class="stat-card-value">23</div>
+          <div class="stat-card-change">+5 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">MEMBER RATING</div>
+          <div class="stat-card-value" style="color:var(--gold)">4.9</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">ACTIVE SINCE</div>
+          <div class="stat-card-value" style="font-size:18px">Oct 2025</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">FEATURED EVENTS</div>
+          <div class="stat-card-value">4</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue tracking -->
+    <div class="profile-section">
+      <div class="profile-section-title">REVENUE FROM THIS PARTNER</div>
+      <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
+        <div class="stat-card">
+          <div class="stat-card-label">TOTAL REVENUE</div>
+          <div class="stat-card-value" style="color:var(--gold)">$4,200</div>
+          <div class="stat-card-change">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">THIS MONTH</div>
+          <div class="stat-card-value" style="color:var(--gold)">$800</div>
+          <div class="stat-card-change">+23% vs last month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">DEAL STRUCTURE</div>
+          <div class="stat-card-value" style="font-size:16px">15% rev share</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">AVG PER REDEMPTION</div>
+          <div class="stat-card-value" style="font-size:18px">$182</div>
+        </div>
+      </div>
+      <div class="table-container" style="margin-top:12px;">
+        <div class="table-header">
+          <div class="table-header-title">Revenue History</div>
+          <button class="btn btn-outline" style="font-size:11px;">&#8595; Export</button>
+        </div>
+        <table>
+          <thead><tr><th>MONTH</th><th>REDEMPTIONS</th><th>GROSS VALUE</th><th>TTMC REVENUE (15%)</th><th>STATUS</th></tr></thead>
+          <tbody>
+            <tr><td style="font-weight:600">Apr 2026</td><td>5</td><td style="color:var(--grey)">$5,340</td><td style="color:var(--gold);font-weight:600">$800</td><td><span class="badge badge-pending">PENDING</span></td></tr>
+            <tr><td style="font-weight:600">Mar 2026</td><td>8</td><td style="color:var(--grey)">$4,320</td><td style="color:var(--gold);font-weight:600">$648</td><td><span class="badge badge-active">PAID</span></td></tr>
+            <tr><td style="font-weight:600">Feb 2026</td><td>6</td><td style="color:var(--grey)">$6,800</td><td style="color:var(--gold);font-weight:600">$1,020</td><td><span class="badge badge-active">PAID</span></td></tr>
+            <tr><td style="font-weight:600">Jan 2026</td><td>4</td><td style="color:var(--grey)">$11,540</td><td style="color:var(--gold);font-weight:600">$1,731</td><td><span class="badge badge-active">PAID</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Deal terms -->
+    <div class="profile-section">
+      <div class="profile-section-title">DEAL TERMS</div>
+      <div class="profile-grid">
+        <div class="profile-field">
+          <div class="profile-field-label">REVENUE SHARE</div>
+          <div class="profile-field-value" style="color:var(--gold)">15% of member spend</div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-field-label">PAYMENT TERMS</div>
+          <div class="profile-field-value">Net 30</div>
+        </div>
+        <div class="profile-field">
+          <div class="profile-field-label">CONTRACT EXPIRES</div>
+          <div class="profile-field-value">Oct 15, 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partner contract -->
+    <div class="profile-section">
+      <div class="profile-section-title">PARTNER AGREEMENT</div>
+      <div style="background:var(--bg2);border:1px solid rgba(201,168,76,0.2);border-radius:14px;padding:24px;display:flex;gap:20px;align-items:flex-start;">
+        <div style="width:64px;height:80px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="font-size:28px;opacity:0.5;">&#128196;</span>
+        </div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="font-size:15px;font-weight:700;">TTMC Partner Agreement — LuxeShine Detailing</span>
+            <span class="badge badge-active">SIGNED</span>
+          </div>
+          <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Contract ID: TTMC-P-2025-00003</div>
+          <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Signed: Oct 1, 2025 by Carlos Mendez (Owner, LuxeShine)</div>
+          <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Term: Oct 15, 2025 — Oct 15, 2026 (12 months, auto-renew)</div>
+          <div style="font-size:12px;color:var(--grey);">Rev share: 15% &bull; Exclusivity: Non-exclusive &bull; Termination: 30-day notice</div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#128196; View Contract</button>
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#8595; Download PDF</button>
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#9993; Email to Partner</button>
+            <button class="btn btn-outline" style="font-size:11px;padding:6px 14px;">&#128260; Request Renewal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">PENDING UPDATES FROM PARTNER</div>
+      <div class="approval-banner">
+        <div>
+          <div class="approval-banner-text">Partner wants to change discount from 25% to 30% OFF</div>
+          <div style="font-size:11px;color:var(--grey-muted);margin-top:4px;">Submitted Apr 5, 2026 by luxeshine@email.com</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-approve" style="font-size:11px;padding:6px 14px;">Approve</button>
+          <button class="btn btn-reject" style="font-size:11px;padding:6px 14px;">Deny</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <div class="profile-section-title">ADMIN NOTES</div>
+      <textarea class="admin-notes" placeholder="Internal notes about this partner...">Great partner. Always responsive. Considering featuring them at the next event. Rev share renegotiation due Oct 2026.</textarea>
+    </div>
+
+    <!-- Partner promo share card -->
+    <div class="profile-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="profile-section-title" style="border:none;padding:0;margin:0">PROMOTE THIS PARTNER</div>
+      </div>
+      <div style="display:flex;gap:24px;margin-top:16px;align-items:flex-start;">
+        <div class="share-preview">
+          <div class="share-preview-logo">TOP TIER MIAMI CLUB</div>
+          <div style="font-size:9px;letter-spacing:3px;color:var(--grey-muted);margin-bottom:16px;">OFFICIAL PARTNER</div>
+          <div class="share-preview-partner">
+            <div class="share-preview-partner-logo">
+              <div style="font-size:9px;letter-spacing:1px;">TTMC</div>
+            </div>
+            <div class="share-preview-x">&times;</div>
+            <div class="share-preview-partner-logo">
+              <div style="font-size:8px;letter-spacing:1px;">LUXE</div>
+            </div>
+          </div>
+          <div class="share-preview-title" style="font-size:18px;">LuxeShine Detailing</div>
+          <div class="share-preview-subtitle">Miami's highest-rated ceramic studio</div>
+          <div style="margin:16px 0;padding:12px;border:1px solid rgba(201,168,76,0.2);border-radius:10px;background:rgba(201,168,76,0.05);">
+            <div style="font-size:10px;letter-spacing:2px;color:var(--gold);margin-bottom:4px;">EXCLUSIVE TTMC MEMBER OFFER</div>
+            <div style="font-size:22px;font-weight:700;color:var(--gold);">25% OFF</div>
+            <div style="font-size:11px;color:var(--grey);">Ceramic coating, PPF, and full detail packages</div>
+          </div>
+          <div class="share-preview-footer">@TOPTIERMIAMICLUB &bull; @LUXESHINE.MIA</div>
+        </div>
+        <div style="flex:1;">
+          <p style="font-size:13px;color:var(--grey);margin-bottom:16px;">Promote this partner across social media. Includes both logos and offer details.</p>
+          <div class="share-buttons">
+            <button class="share-btn">&#128247; Instagram Post</button>
+            <button class="share-btn">&#128247; Instagram Story</button>
+            <button class="share-btn">&#127916; TikTok</button>
+            <button class="share-btn">&#128172; iMessage</button>
+            <button class="share-btn">&#8595; Download PNG</button>
+            <button class="share-btn">&#128279; Copy Link</button>
+          </div>
+          <div style="margin-top:16px;">
+            <p class="form-label">CUSTOM CAPTION</p>
+            <textarea class="admin-notes" style="min-height:60px;font-size:12px;">TTMC members get 25% off at @luxeshine.mia &#128142; Miami's best ceramic coating, PPF, and detail work. Our cars deserve the best. Link in bio. &#128663;&#10024;</textarea>
+          </div>
+          <div style="margin-top:12px;">
+            <p class="form-label">TAG PARTNER</p>
+            <input class="form-input" value="@luxeshine.mia" style="max-width:240px;" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tier Selection Modal -->
+<div class="modal-overlay" id="tier-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <h2>Select Membership Tier</h2>
+    <p style="color:var(--grey);font-size:13px;margin-bottom:20px;">Approving Marco Torres. Choose their membership level.</p>
+    <div class="tier-options">
+      <div class="tier-option" onclick="document.querySelectorAll('.tier-option').forEach(t=>t.classList.remove('selected'));this.classList.add('selected')">
+        <div class="tier-option-name">Core</div>
+        <div class="tier-option-price">$700/yr</div>
+      </div>
+      <div class="tier-option selected" onclick="document.querySelectorAll('.tier-option').forEach(t=>t.classList.remove('selected'));this.classList.add('selected')">
+        <div class="tier-option-name">VIP</div>
+        <div class="tier-option-price">$3,000/yr</div>
+      </div>
+      <div class="tier-option" onclick="document.querySelectorAll('.tier-option').forEach(t=>t.classList.remove('selected'));this.classList.add('selected')">
+        <div class="tier-option-name">Strategic Circle</div>
+        <div class="tier-option-price">$6,000/yr</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:24px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="document.getElementById('tier-modal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-gold" onclick="document.getElementById('tier-modal').classList.remove('show')">Approve as VIP</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Event Modal -->
+<div class="modal-overlay" id="event-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <h2>Create Event</h2>
+    <div class="form-group">
+      <label class="form-label">EVENT NAME</label>
+      <input class="form-input" placeholder="Midnight Run: South Beach" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">DATE</label>
+        <input class="form-input" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">CAPACITY</label>
+        <input class="form-input" type="number" placeholder="25" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">LOCATION</label>
+      <input class="form-input" placeholder="Brickell start point" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">DESCRIPTION</label>
+      <input class="form-input" placeholder="Brief description..." />
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="document.getElementById('event-modal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-outline">Save as Draft</button>
+      <button class="btn btn-gold" onclick="document.getElementById('event-modal').classList.remove('show')">Submit for Approval</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Partner Modal -->
+<div class="modal-overlay" id="partner-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="modal">
+    <h2>Add Partner</h2>
+    <div class="form-group">
+      <label class="form-label">BUSINESS NAME</label>
+      <input class="form-input" placeholder="Partner name" />
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">CATEGORY</label>
+        <select class="form-input"><option>Automotive</option><option>Dining</option><option>Lifestyle</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">DISCOUNT</label>
+        <input class="form-input" placeholder="25% OFF" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PARTNER EMAIL (for access)</label>
+      <input class="form-input" type="email" placeholder="partner@business.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">DESCRIPTION</label>
+      <input class="form-input" placeholder="What they offer TTMC members..." />
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+      <button class="btn btn-outline" onclick="document.getElementById('partner-modal').classList.remove('show')">Cancel</button>
+      <button class="btn btn-gold" onclick="document.getElementById('partner-modal').classList.remove('show')">Add Partner</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.sidebar-link').forEach(function(l) { l.classList.remove('active'); });
+  var clicked = event.target.closest('.sidebar-link');
+  if (clicked) clicked.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showDetail(pageId) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('page-' + pageId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function openProfile() { showDetail('member-detail'); }
+function openApplicant() { showDetail('applicant-detail'); }
+
+function showProfileTab(tab) {
+  document.querySelectorAll('.profile-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.profile-tab-content').forEach(function(c) { c.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('ptab-' + tab).classList.add('active');
+}
+
+function toggleMenu(el) {
+  var wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.action-menu.open').forEach(function(m) { m.classList.remove('open'); });
+  if (!wasOpen) el.classList.add('open');
+  event.stopPropagation();
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.action-menu.open').forEach(function(m) { m.classList.remove('open'); });
+});
+
+function handlePhotoUpload(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    var container = input.closest('.photo-upload');
+    reader.onload = function(e) {
+      var existing = container.querySelector('img');
+      if (existing) existing.remove();
+      var img = document.createElement('img');
+      img.src = e.target.result;
+      container.appendChild(img);
+      container.classList.add('has-photo');
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+</body>
+</html>

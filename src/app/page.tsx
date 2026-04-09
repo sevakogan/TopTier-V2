@@ -48,18 +48,18 @@ const FEATURE_CARDS = [
 const HOW_IT_WORKS_STEPS = [
   {
     number: "01",
-    title: "Get Pre-Approved",
+    title: "Apply",
     body: "Submit your application. Car, Instagram, how you found us. Every submission is reviewed personally within 48 hours.",
   },
   {
     number: "02",
-    title: "Complete Your Application",
-    body: "Once pre-approved, you'll receive a full application to fill out. This is where we get to know you.",
+    title: "Select Your Tier",
+    body: "Once pre-approved, choose your membership level. Upload your driver's license and sign the membership agreement.",
   },
   {
     number: "03",
-    title: "Sign & Pay",
-    body: "Review and sign the membership agreement. Pay your dues. You're officially in the network.",
+    title: "Get Approved & Pay",
+    body: "We review your documents and fully approve your membership. Sign the invoice, pay your dues, and you're in.",
   },
   {
     number: "04",
