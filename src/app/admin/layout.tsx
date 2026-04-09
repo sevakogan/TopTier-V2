@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
 const ADMIN_EMAILS = [
   "sevakogan@gmail.com",
@@ -108,5 +109,10 @@ export default function AdminLayout({
 
   if (!authorized) return null;
 
-  return <>{children}</>;
+  return (
+    <div className="flex min-h-screen bg-[#0A0A0A] font-sans">
+      <AdminSidebar />
+      <main className="flex-1 ml-[240px] p-8">{children}</main>
+    </div>
+  );
 }
