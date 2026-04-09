@@ -258,6 +258,20 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
 /* Approval banner */
 .approval-banner { background: rgba(234,179,8,0.08); border: 1px solid rgba(234,179,8,0.2); border-radius: 10px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .approval-banner-text { font-size: 13px; color: #eab308; }
+
+/* Tooltip icons */
+.tooltip-icon { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: rgba(201,168,76,0.15); color: var(--gold); font-size: 9px; font-weight: 700; cursor: help; margin-left: 6px; position: relative; vertical-align: middle; }
+.tooltip-icon:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: var(--bg2); border: 1px solid rgba(201,168,76,0.2); color: var(--grey); font-size: 11px; font-weight: 400; padding: 8px 12px; border-radius: 8px; white-space: nowrap; max-width: 280px; white-space: normal; z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.tooltip-icon:hover::before { content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: rgba(201,168,76,0.2); z-index: 100; }
+
+/* Partner self-service section */
+.partner-managed-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.partner-managed-section .form-group { margin-bottom: 16px; }
+.partner-info-box { background: rgba(201,168,76,0.04); border: 1px solid rgba(201,168,76,0.2); border-radius: 12px; padding: 20px; margin-top: 20px; }
+.partner-info-box h4 { font-size: 11px; letter-spacing: 2px; color: var(--gold); margin-bottom: 12px; }
+.partner-info-box ol { padding-left: 20px; font-size: 12px; color: var(--grey); line-height: 2; }
+.video-upload { width: 200px; height: 120px; border-radius: 12px; background: rgba(255,255,255,0.06); border: 2px dashed rgba(201,168,76,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.video-upload:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
 </style>
 </head>
 <body>
@@ -309,12 +323,12 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
 
     <div class="stats-row">
       <div class="stat-card">
-        <div class="stat-card-label">PENDING</div>
+        <div class="stat-card-label">PENDING <span class="tooltip-icon" data-tip="Applications waiting for your review">?</span></div>
         <div class="stat-card-value">3</div>
         <div class="stat-card-change">+2 today</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">APPROVED THIS WEEK</div>
+        <div class="stat-card-label">APPROVED THIS WEEK <span class="tooltip-icon" data-tip="Members pre-approved or fully approved in the last 7 days">?</span></div>
         <div class="stat-card-value">7</div>
         <div class="stat-card-change">+3 vs last week</div>
       </div>
@@ -630,11 +644,11 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
             <div class="applicant-detail-value">+1 (305) 555-0147</div>
           </div>
           <div class="applicant-detail">
-            <div class="applicant-detail-label">INSTAGRAM</div>
+            <div class="applicant-detail-label">INSTAGRAM <span class="tooltip-icon" data-tip="Check their profile to verify car ownership and social presence">?</span></div>
             <div class="applicant-detail-value"><a href="#">@marco.drives</a></div>
           </div>
           <div class="applicant-detail">
-            <div class="applicant-detail-label">SOURCE</div>
+            <div class="applicant-detail-label">SOURCE <span class="tooltip-icon" data-tip="How they found TTMC — helps track marketing channels">?</span></div>
             <div class="applicant-detail-value">Instagram</div>
           </div>
           <div class="applicant-detail">
@@ -647,7 +661,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
           </div>
         </div>
         <div class="profile-section" style="margin-top:20px">
-          <div class="profile-section-title">ADMIN NOTES</div>
+          <div class="profile-section-title">ADMIN NOTES <span class="tooltip-icon" data-tip="Private notes only visible to admin. Not shared with applicant.">?</span></div>
           <textarea class="admin-notes" placeholder="Add notes about this applicant..."></textarea>
         </div>
         <!-- Onboarding status tracker -->
@@ -656,27 +670,27 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
           <div style="display:flex;gap:8px;align-items:stretch;">
             <div style="flex:1;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;padding:14px;text-align:center;">
               <div style="font-size:16px;margin-bottom:4px;">&#10003;</div>
-              <div style="font-size:10px;letter-spacing:1px;color:#22c55e;font-weight:600;">1. APPLIED</div>
+              <div style="font-size:10px;letter-spacing:1px;color:#22c55e;font-weight:600;">1. APPLIED <span class="tooltip-icon" data-tip="Applicant submitted their info and vehicle details through the public form">?</span></div>
               <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Mar 12</div>
             </div>
             <div style="flex:1;background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:14px;text-align:center;">
               <div style="font-size:16px;margin-bottom:4px;">&#9679;</div>
-              <div style="font-size:10px;letter-spacing:1px;color:#eab308;font-weight:600;">2. PRE-APPROVE</div>
+              <div style="font-size:10px;letter-spacing:1px;color:#eab308;font-weight:600;">2. PRE-APPROVE <span class="tooltip-icon" data-tip="Admin reviews application and gives initial approval. Applicant is notified to select tier.">?</span></div>
               <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Awaiting you</div>
             </div>
             <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
               <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
-              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">3. TIER + DOCS</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">3. TIER + DOCS <span class="tooltip-icon" data-tip="Applicant chooses membership tier, signs contract, and uploads driver's license">?</span></div>
               <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Applicant selects tier, signs contract, uploads DL</div>
             </div>
             <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
               <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
-              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">4. FULL APPROVE</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">4. FULL APPROVE <span class="tooltip-icon" data-tip="Admin reviews uploaded documents and gives final membership approval">?</span></div>
               <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">You review docs &amp; approve</div>
             </div>
             <div style="flex:1;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;opacity:0.4;">
               <div style="font-size:16px;margin-bottom:4px;">&#9675;</div>
-              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">5. PAY + ACCESS</div>
+              <div style="font-size:10px;letter-spacing:1px;color:var(--grey-muted);font-weight:600;">5. PAY + ACCESS <span class="tooltip-icon" data-tip="Member pays invoice, gets login credentials, and gains full access to the member portal">?</span></div>
               <div style="font-size:10px;color:var(--grey-muted);margin-top:2px;">Signs invoice, pays, auto-login</div>
             </div>
           </div>
@@ -708,15 +722,15 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
         <div class="member-card-car">&#127950; 2024 Porsche 992 GT3 &mdash; Chalk White, Full Akrapovic exhaust, lowered</div>
         <div class="member-card-row">
           <div class="member-card-field">
-            <div class="member-card-field-label">TIER</div>
+            <div class="member-card-field-label">TIER <span class="tooltip-icon" data-tip="Core ($700/yr), VIP ($3,000/yr), Strategic Circle ($6,000/yr)">?</span></div>
             <div class="member-card-field-value"><span class="badge badge-vip">VIP</span></div>
           </div>
           <div class="member-card-field">
-            <div class="member-card-field-label">STATUS</div>
+            <div class="member-card-field-label">STATUS <span class="tooltip-icon" data-tip="Active = current member. Expired = needs renewal. Suspended = paused by admin.">?</span></div>
             <div class="member-card-field-value"><span class="badge badge-active">ACTIVE</span></div>
           </div>
           <div class="member-card-field">
-            <div class="member-card-field-label">MEMBER SINCE</div>
+            <div class="member-card-field-label">MEMBER SINCE <span class="tooltip-icon" data-tip="Date their membership was fully activated after payment">?</span></div>
             <div class="member-card-field-value">Mar 15, 2026</div>
           </div>
           <div class="member-card-field">
@@ -969,11 +983,11 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
         <div class="profile-section-title">FINANCIAL SUMMARY</div>
         <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
           <div class="stat-card">
-            <div class="stat-card-label">TOTAL PAID</div>
+            <div class="stat-card-label">TOTAL PAID <span class="tooltip-icon" data-tip="All payments received from this member since joining">?</span></div>
             <div class="stat-card-value">$3,000</div>
           </div>
           <div class="stat-card">
-            <div class="stat-card-label">NEXT PAYMENT</div>
+            <div class="stat-card-label">NEXT PAYMENT <span class="tooltip-icon" data-tip="Auto-renewal date. Member gets reminded 14 days before.">?</span></div>
             <div class="stat-card-value" style="font-size:18px">Mar 15, 2027</div>
           </div>
           <div class="stat-card">
@@ -1034,7 +1048,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
 
       <div class="profile-section">
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-gold">+ Add Charge</button>
+          <button class="btn btn-gold">+ Add Charge <span class="tooltip-icon" data-tip="Manually add a charge (event fee, merchandise, etc.)" style="background:rgba(10,10,10,0.3);color:var(--bg)">?</span></button>
           <button class="btn btn-outline">Generate Invoice</button>
           <button class="btn btn-outline">Email All Invoices</button>
         </div>
@@ -1046,7 +1060,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div class="profile-section">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="profile-section-title" style="border:none;padding:0;margin:0">THE GARAGE</div>
-          <button class="btn btn-gold" style="font-size:11px">+ Add Vehicle</button>
+          <button class="btn btn-gold" style="font-size:11px">+ Add Vehicle <span class="tooltip-icon" data-tip="Members can have multiple vehicles. Only one is primary." style="background:rgba(10,10,10,0.3);color:var(--bg)">?</span></button>
         </div>
 
         <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:16px;">
@@ -1058,7 +1072,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
                 <div class="photo-upload-text">UPLOAD CAR PHOTO</div>
                 <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
               </div>
-              <div style="position:absolute;top:10px;right:10px;"><span class="badge badge-vip">PRIMARY</span></div>
+              <div style="position:absolute;top:10px;right:10px;"><span class="badge badge-vip">PRIMARY</span> <span class="tooltip-icon" data-tip="The car registered on their membership. Shown on their member card.">?</span></div>
             </div>
             <div style="padding:16px;">
               <div style="font-weight:700;font-size:16px;margin-bottom:4px;">2024 Porsche 992 GT3</div>
@@ -1112,6 +1126,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
               <span style="font-size:15px;font-weight:700;">TTMC VIP Membership Agreement</span>
               <span class="badge badge-active">SIGNED</span>
+              <span class="tooltip-icon" data-tip="Original membership agreement signed during onboarding. Legally binding.">?</span>
             </div>
             <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Contract ID: TTMC-C-2026-00017</div>
             <div style="font-size:12px;color:var(--grey);margin-bottom:4px;">Signed: Mar 14, 2026 at 2:34 PM EST</div>
@@ -1132,7 +1147,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
         <div class="profile-grid" style="grid-template-columns:1fr 1fr">
           <div class="profile-field" style="text-align:center;padding:24px;">
             <div style="font-size:40px;margin-bottom:8px;opacity:0.3">&#128179;</div>
-            <div class="profile-field-label" style="margin-bottom:8px">DRIVER'S LICENSE</div>
+            <div class="profile-field-label" style="margin-bottom:8px">DRIVER'S LICENSE <span class="tooltip-icon" data-tip="Government-issued ID. Required for verification.">?</span></div>
             <div class="profile-field-value"><span class="badge badge-active">VERIFIED</span></div>
             <div style="font-size:11px;color:var(--grey-muted);margin-top:8px">Uploaded Mar 14, 2026</div>
             <div style="display:flex;gap:6px;justify-content:center;margin-top:12px;">
@@ -1179,7 +1194,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       </div>
 
       <div style="display:flex;gap:8px;margin-top:12px;">
-        <button class="btn btn-gold" style="font-size:11px;">&#43; Request New Signature</button>
+        <button class="btn btn-gold" style="font-size:11px;">&#43; Request New Signature <span class="tooltip-icon" data-tip="Send a new document for the member to sign electronically." style="background:rgba(10,10,10,0.3);color:var(--bg)">?</span></button>
         <button class="btn btn-outline" style="font-size:11px;">&#8595; Download All Documents</button>
       </div>
     </div>
@@ -1197,6 +1212,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       </div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-gold" onclick="toggleEventEdit()">&#9998; Edit Event</button>
+        <button class="btn btn-gold" onclick="alert('Event details sent to seva@thelevelteam.com and (305) 555-0000')">&#9993; Send To Myself</button>
         <button class="btn btn-outline">Duplicate</button>
         <button class="btn btn-reject">Cancel Event</button>
       </div>
@@ -1207,7 +1223,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
         <!-- Left: Cover image -->
         <div>
-          <div class="form-label" style="margin-bottom:8px;">EVENT COVER IMAGE</div>
+          <div class="form-label" style="margin-bottom:8px;">EVENT COVER IMAGE <span class="tooltip-icon" data-tip="This image appears as the event thumbnail in the member portal and on the public events page.">?</span></div>
           <div class="photo-upload" onclick="this.querySelector('input').click()" style="width:100%;height:320px;border-radius:12px;">
             <div class="photo-upload-icon" style="font-size:40px;">&#127912;</div>
             <div class="photo-upload-text" style="font-size:11px;">UPLOAD COVER IMAGE</div>
@@ -1236,12 +1252,12 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
               <input class="form-input" type="time" value="20:00" />
             </div>
             <div class="form-group">
-              <label class="form-label">CAPACITY</label>
+              <label class="form-label">CAPACITY <span class="tooltip-icon" data-tip="Maximum number of members who can RSVP">?</span></label>
               <input class="form-input" type="number" value="30" />
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">VISIBILITY</label>
+            <label class="form-label">VISIBILITY <span class="tooltip-icon" data-tip="Public events appear on the website. Members Only events are hidden.">?</span></label>
             <select class="form-input"><option>Members Only</option><option selected>Public</option></select>
           </div>
           <div style="display:flex;gap:8px;margin-top:16px;">
@@ -1310,8 +1326,8 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
 
     <div class="profile-section">
       <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="profile-section-title" style="border:none;padding:0;margin:0">RSVP LIST (18)</div>
-        <button class="btn btn-outline" style="font-size:11px;">&#8595; Export CSV</button>
+        <div class="profile-section-title" style="border:none;padding:0;margin:0">RSVP LIST (18) <span class="tooltip-icon" data-tip="Confirmed RSVPs vs total capacity">?</span></div>
+        <button class="btn btn-outline" style="font-size:11px;">&#8595; Export CSV <span class="tooltip-icon" data-tip="Download the full RSVP list as a spreadsheet">?</span></button>
       </div>
       <div class="table-container" style="margin-top:12px;">
         <table>
@@ -1321,8 +1337,8 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
               <div class="action-menu" onclick="toggleMenu(this)">
                 <button class="action-menu-btn">Actions &#9662;</button>
                 <div class="action-menu-dropdown">
-                  <div class="action-menu-item">&#10003; Check In</div>
-                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#10003; Check In <span class="tooltip-icon" data-tip="Mark this member as physically present at the event" style="width:14px;height:14px;font-size:8px;">?</span></div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist <span class="tooltip-icon" data-tip="Moves from confirmed to waitlist, freeing a spot" style="width:14px;height:14px;font-size:8px;">?</span></div>
                   <div class="action-menu-item">&#9993; Send Message</div>
                   <div class="action-menu-divider"></div>
                   <div class="action-menu-item danger">&#10005; Remove from Event</div>
@@ -1333,8 +1349,8 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
               <div class="action-menu" onclick="toggleMenu(this)">
                 <button class="action-menu-btn">Actions &#9662;</button>
                 <div class="action-menu-dropdown">
-                  <div class="action-menu-item">&#10003; Check In</div>
-                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#10003; Check In <span class="tooltip-icon" data-tip="Mark this member as physically present at the event" style="width:14px;height:14px;font-size:8px;">?</span></div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist <span class="tooltip-icon" data-tip="Moves from confirmed to waitlist, freeing a spot" style="width:14px;height:14px;font-size:8px;">?</span></div>
                   <div class="action-menu-item">&#9993; Send Message</div>
                   <div class="action-menu-divider"></div>
                   <div class="action-menu-item danger">&#10005; Remove from Event</div>
@@ -1345,8 +1361,8 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
               <div class="action-menu" onclick="toggleMenu(this)">
                 <button class="action-menu-btn">Actions &#9662;</button>
                 <div class="action-menu-dropdown">
-                  <div class="action-menu-item">&#10003; Check In</div>
-                  <div class="action-menu-item">&#128260; Move to Waitlist</div>
+                  <div class="action-menu-item">&#10003; Check In <span class="tooltip-icon" data-tip="Mark this member as physically present at the event" style="width:14px;height:14px;font-size:8px;">?</span></div>
+                  <div class="action-menu-item">&#128260; Move to Waitlist <span class="tooltip-icon" data-tip="Moves from confirmed to waitlist, freeing a spot" style="width:14px;height:14px;font-size:8px;">?</span></div>
                   <div class="action-menu-item">&#9993; Send Message</div>
                   <div class="action-menu-divider"></div>
                   <div class="action-menu-item danger">&#10005; Remove from Event</div>
@@ -1400,7 +1416,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
             <button class="share-btn">&#128279; Copy Link</button>
           </div>
           <div style="margin-top:16px;">
-            <p class="form-label">CUSTOM CAPTION</p>
+            <p class="form-label">CUSTOM CAPTION <span class="tooltip-icon" data-tip="Pre-written social media caption. Edit before sharing.">?</span></p>
             <textarea class="admin-notes" style="min-height:60px;font-size:12px;">Sim racing. Supercars. Midnight convoy. Limited spots. You know the vibe. &#127950;&#128293; DM to apply. @toptiermiamiclub</textarea>
           </div>
         </div>
@@ -1420,6 +1436,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div style="display:flex;gap:8px;">
         <button class="btn btn-outline">Edit Partner</button>
         <div class="toggle on" onclick="this.classList.toggle('on')" style="margin-top:6px;"></div>
+        <span class="tooltip-icon" data-tip="Toggle partner visibility on the member perks page" style="margin-top:8px;">?</span>
       </div>
     </div>
 
@@ -1435,6 +1452,98 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div class="profile-field">
         <div class="profile-field-label">WEBSITE</div>
         <div class="profile-field-value"><a href="#" style="color:var(--gold)">luxeshine.com</a></div>
+      </div>
+    </div>
+
+    <!-- Partner Profile (Partner-Managed) -->
+    <div class="profile-section">
+      <div class="profile-section-title">PARTNER PROFILE (Partner-Managed)</div>
+      <div class="partner-managed-section">
+        <div class="form-group">
+          <label class="form-label">BUSINESS DESCRIPTION <span class="tooltip-icon" data-tip="Describe your business in 2-3 sentences. This appears on the TTMC member perks page.">?</span></label>
+          <textarea class="admin-notes" style="min-height:70px;" placeholder="Describe your business in 2-3 sentences...">Miami's premier ceramic coating and paint protection studio. We specialize in Ceramic Pro, XPEL PPF, and full interior/exterior details for exotic and luxury vehicles.</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">REVIEW LINK <span class="tooltip-icon" data-tip="Link to your Google Reviews, Yelp, or TrustPilot page. Members use this to verify quality.">?</span></label>
+          <input class="form-input" value="https://g.page/luxeshine-miami/review" placeholder="Google Reviews, Yelp, or TrustPilot link..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label" style="margin-bottom:10px;">SOCIAL MEDIA</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div>
+              <label class="form-label" style="font-size:9px;">INSTAGRAM <span class="tooltip-icon" data-tip="Your business Instagram handle. We tag you in promo posts.">?</span></label>
+              <input class="form-input" value="@luxeshine.mia" placeholder="@handle" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size:9px;">TIKTOK <span class="tooltip-icon" data-tip="Your TikTok handle for video collaborations.">?</span></label>
+              <input class="form-input" value="" placeholder="@handle" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size:9px;">WEBSITE <span class="tooltip-icon" data-tip="Your main business website URL.">?</span></label>
+              <input class="form-input" value="luxeshine.com" placeholder="https://..." />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PHOTOS (up to 6) <span class="tooltip-icon" data-tip="Upload high-quality photos of your work, shop, or products. These appear in your partner profile. Min 1080x1080px recommended.">?</span></label>
+          <div style="display:grid;grid-template-columns:repeat(3,120px);gap:10px;margin-top:8px;">
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+            <div class="photo-upload" style="width:120px;height:120px;" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#128247;</div>
+              <div class="photo-upload-text">UPLOAD</div>
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoUpload(this)">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">VIDEOS (up to 2) <span class="tooltip-icon" data-tip="Upload short videos (under 60 sec) showcasing your best work. MP4 format. These can be shared on TTMC social media.">?</span></label>
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <div class="video-upload" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#127916;</div>
+              <div class="photo-upload-text">UPLOAD VIDEO</div>
+              <input type="file" accept="video/mp4" style="display:none">
+            </div>
+            <div class="video-upload" onclick="this.querySelector('input').click()">
+              <div class="photo-upload-icon">&#127916;</div>
+              <div class="photo-upload-text">UPLOAD VIDEO</div>
+              <input type="file" accept="video/mp4" style="display:none">
+            </div>
+          </div>
+        </div>
+        <div class="partner-info-box">
+          <h4>HOW TO UPDATE YOUR PROFILE</h4>
+          <ol>
+            <li>Fill in all fields above — complete profiles get 3x more member visits</li>
+            <li>Upload at least 3 photos showing your best work</li>
+            <li>Add your review link — members check reviews before redeeming</li>
+            <li>All changes are submitted for TTMC admin approval before going live</li>
+            <li>Updates typically approved within 24 hours</li>
+          </ol>
+        </div>
       </div>
     </div>
 
@@ -1454,7 +1563,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div class="profile-section-title">PARTNER ACTIVITY &amp; ENGAGEMENT</div>
       <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr;">
         <div class="stat-card">
-          <div class="stat-card-label">REDEMPTIONS</div>
+          <div class="stat-card-label">REDEMPTIONS <span class="tooltip-icon" data-tip="Number of times members have used this partner's discount">?</span></div>
           <div class="stat-card-value">23</div>
           <div class="stat-card-change">+5 this month</div>
         </div>
@@ -1518,7 +1627,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
       <div class="profile-section-title">DEAL TERMS</div>
       <div class="profile-grid">
         <div class="profile-field">
-          <div class="profile-field-label">REVENUE SHARE</div>
+          <div class="profile-field-label">REVENUE SHARE <span class="tooltip-icon" data-tip="Percentage of member spend that TTMC earns from this partner">?</span></div>
           <div class="profile-field-value" style="color:var(--gold)">15% of member spend</div>
         </div>
         <div class="profile-field">
@@ -1559,7 +1668,7 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
     </div>
 
     <div class="profile-section">
-      <div class="profile-section-title">PENDING UPDATES FROM PARTNER</div>
+      <div class="profile-section-title">PENDING UPDATES FROM PARTNER <span class="tooltip-icon" data-tip="Changes submitted by the partner that need your approval before going live">?</span></div>
       <div class="approval-banner">
         <div>
           <div class="approval-banner-text">Partner wants to change discount from 25% to 30% OFF</div>
@@ -1615,11 +1724,11 @@ tr.clickable:hover td { background: rgba(201,168,76,0.03); }
             <button class="share-btn">&#128279; Copy Link</button>
           </div>
           <div style="margin-top:16px;">
-            <p class="form-label">CUSTOM CAPTION</p>
+            <p class="form-label">CUSTOM CAPTION <span class="tooltip-icon" data-tip="Pre-written social media caption. Edit before sharing.">?</span></p>
             <textarea class="admin-notes" style="min-height:60px;font-size:12px;">TTMC members get 25% off at @luxeshine.mia &#128142; Miami's best ceramic coating, PPF, and detail work. Our cars deserve the best. Link in bio. &#128663;&#10024;</textarea>
           </div>
           <div style="margin-top:12px;">
-            <p class="form-label">TAG PARTNER</p>
+            <p class="form-label">TAG PARTNER <span class="tooltip-icon" data-tip="Their Instagram handle — automatically tagged in the post">?</span></p>
             <input class="form-input" value="@luxeshine.mia" style="max-width:240px;" />
           </div>
         </div>
