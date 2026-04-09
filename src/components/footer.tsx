@@ -67,6 +67,15 @@ export function Footer() {
           memberships@toptiermiamiclub.com
         </a>
       </div>
+
+      <div className="mx-auto mt-6 max-w-[1200px] text-center">
+        <a
+          href="/admin"
+          className="text-[11px] text-[rgba(245,245,240,0.1)] transition-colors hover:text-[rgba(245,245,240,0.3)]"
+        >
+          Admin
+        </a>
+      </div>
     </footer>
   );
 }
