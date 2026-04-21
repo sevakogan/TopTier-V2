@@ -16,18 +16,8 @@ import { TiltCard } from "@/components/tilt-card"
 import { AnimatedTestimonials } from "@/components/ui/animated-testimonials"
 import { FocusCards } from "@/components/ui/focus-cards"
 import { Timeline } from "@/components/ui/timeline"
-
-const PARTNER_NAMES = [
-  "MPH CLUB",
-  "1OF1 MOTORSPORTS",
-  "SHIFT ARCADE",
-  "PALM CAR RESERVE",
-  "COLLECTION SUITES",
-  "TITAN CHEMICALS",
-  "XZOTICA MIAMI",
-  "ALPHA EXOTICS",
-  "CARSUNDERSTARS",
-] as const
+import { PartnerOrbit } from "@/components/ambient/partner-orbit"
+import { ConvoyTrail } from "@/components/ambient/convoy-trail"
 
 const MARQUEE_ITEMS = [
   "NIGHT RUNS",
@@ -155,21 +145,12 @@ export default function Home() {
       {/* ── Section 2: Beam Divider ── */}
       <BeamDivider variant="default" />
 
-      {/* ── Section 3: Partner Logos Marquee ── */}
-      <div className="border-y border-[rgba(255,255,255,0.04)] py-6">
+      {/* ── Section 3: Partner Orbit ── */}
+      <div className="border-y border-[rgba(255,255,255,0.04)] py-12">
         <p className="mb-3 text-center text-[16px] tracking-[5px] text-[rgba(201,168,76,0.3)]">
           ECOSYSTEM PARTNERS
         </p>
-        <Marquee pauseOnHover>
-          {PARTNER_NAMES.map((name) => (
-            <span
-              key={name}
-              className="mx-8 text-[15px] font-semibold tracking-[3px] text-[rgba(245,245,240,0.25)]"
-            >
-              {name}
-            </span>
-          ))}
-        </Marquee>
+        <PartnerOrbit />
       </div>
 
       {/* ── Section 4: Marquee Strip ── */}
@@ -187,7 +168,10 @@ export default function Home() {
       </div>
 
       {/* ── Section 4: Experience Section ── */}
-      <section className="relative mx-auto max-w-5xl px-6 py-32">
+      <section
+        data-ambient-section="experience"
+        className="relative mx-auto max-w-5xl px-6 py-32"
+      >
         <BeamPath className="pointer-events-none opacity-60" />
 
         <div className="relative grid items-center gap-16 md:grid-cols-2">
@@ -278,7 +262,10 @@ export default function Home() {
       </section>
 
       {/* ── Testimonials ── */}
-      <section className="mx-auto max-w-5xl px-6 py-24">
+      <section
+        data-ambient-section="testimonials"
+        className="mx-auto max-w-5xl px-6 py-24"
+      >
         <SectionReveal>
           <p className="mb-4 text-center text-[14px] tracking-[5px] text-[#C9A84C]">
             MEMBER VOICES
@@ -332,6 +319,7 @@ export default function Home() {
               That&apos;s how long it takes us to review your application. If
               you&apos;re a fit, you&apos;ll hear from us.
             </p>
+            <ConvoyTrail />
             <Link
               href="/apply"
               className="btn-fill-gold rounded-lg px-12 py-4 text-[16px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"

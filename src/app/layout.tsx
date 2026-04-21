@@ -7,6 +7,9 @@ import { CursorGlow } from "@/components/cursor-glow";
 import { ScrollProgress } from "@/components/scroll-progress";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { MemberCountPill } from "@/components/ambient/member-count-pill";
+import { EventStatusWidget } from "@/components/ambient/event-status-widget";
+import { MiamiSkyline } from "@/components/ambient/miami-skyline";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -50,6 +53,9 @@ export default function RootLayout({
           <Nav />
           <main className="flex-1">{children}</main>
           <Footer />
+          <MemberCountPill />
+          <EventStatusWidget />
+          <MiamiSkyline />
         </LenisProvider>
       </body>
     </html>
