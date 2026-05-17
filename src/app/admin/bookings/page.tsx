@@ -10,6 +10,7 @@ import {
   BOOKING_STATUSES,
 } from "@/lib/backend/bookings-admin";
 import { useAdminResource, adminMutate } from "@/lib/admin/use-admin-api";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 
 type Payload = { requests: BookingRequest[]; bookings: Booking[] };
 const SC: Record<string, string> = {
@@ -216,32 +217,28 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {sel && (
-        <>
-          <div
-            onClick={() => setSel(null)}
-            className="fixed inset-0 bg-black/60 z-40"
-          />
-          <aside className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] max-w-[95vw] bg-[#0d0d0d] border-l border-[rgba(255,255,255,0.07)] z-50 overflow-y-auto p-7">
-            <button
-              type="button"
-              onClick={() => setSel(null)}
-              className="float-right text-[20px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            >
-              ✕
-            </button>
-            <div className="text-[19px] font-bold text-[#F5F5F0]">
-              {sel.kind === "request"
-                ? (sel.row as BookingRequest).full_name
-                : (sel.row as Booking).member_name || "Booking"}
-            </div>
-            <div className="text-[12px] text-[rgba(245,245,240,0.45)] mt-1 mb-4">
-              {sel.kind === "request"
-                ? `${(sel.row as BookingRequest).email} · ${
-                    (sel.row as BookingRequest).source
-                  }`
-                : (sel.row as Booking).listing_title || ""}
-            </div>
+      <AdminDrawer
+        open={!!sel}
+        onClose={() => setSel(null)}
+        title={
+          sel
+            ? sel.kind === "request"
+              ? (sel.row as BookingRequest).full_name
+              : (sel.row as Booking).member_name || "Booking"
+            : ""
+        }
+        subtitle={
+          sel
+            ? sel.kind === "request"
+              ? `${(sel.row as BookingRequest).email} · ${
+                  (sel.row as BookingRequest).source
+                }`
+              : (sel.row as Booking).listing_title || undefined
+            : undefined
+        }
+      >
+        {sel && (
+          <>
 
             <div className="flex flex-wrap gap-2 mb-5">
               {statuses.map((s) => (
@@ -322,9 +319,9 @@ export default function BookingsPage() {
                 className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)] resize-y"
               />
             </div>
-          </aside>
-        </>
-      )}
+          </>
+        )}
+      </AdminDrawer>
     </div>
   );
 }

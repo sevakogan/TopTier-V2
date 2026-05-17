@@ -8,6 +8,7 @@ import type {
 import { RENTAL_STATUSES } from "@/lib/backend/rentals-admin";
 import { useAdminResource, adminMutate } from "@/lib/admin/use-admin-api";
 import { ImageLightbox } from "@/components/admin/image-lightbox";
+import { AdminDrawer } from "@/components/admin/admin-drawer";
 
 type Payload = {
   submissions: RentalSubmission[];
@@ -213,35 +214,34 @@ export default function RentalsPage() {
         </div>
       )}
 
-      {sel && (
-        <>
-          <div
-            onClick={() => setSel(null)}
-            className="fixed inset-0 bg-black/60 z-40"
-          />
-          <aside className="fixed top-0 right-0 bottom-0 w-full sm:w-[460px] max-w-[95vw] bg-[#0d0d0d] border-l border-[rgba(255,255,255,0.07)] z-50 overflow-y-auto p-7">
-            <button
-              type="button"
-              onClick={() => setSel(null)}
-              className="float-right text-[20px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            >
-              ✕
-            </button>
-            <div className="text-[19px] font-bold text-[#F5F5F0]">
-              {sel.kind === "submission"
-                ? [
-                    (sel.row as RentalSubmission).vehicle_year,
-                    (sel.row as RentalSubmission).vehicle_make,
-                    (sel.row as RentalSubmission).vehicle_model,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")
-                : (sel.row as RentalProvider).company_name}
-            </div>
-            <div className="text-[12px] text-[rgba(245,245,240,0.45)] mt-1 mb-4">
-              {sel.row.contact_name} · {sel.row.contact_email}
-              {sel.row.contact_phone ? ` · ${sel.row.contact_phone}` : ""}
-            </div>
+      <AdminDrawer
+        open={!!sel}
+        onClose={() => setSel(null)}
+        title={
+          sel
+            ? sel.kind === "submission"
+              ? [
+                  (sel.row as RentalSubmission).vehicle_year,
+                  (sel.row as RentalSubmission).vehicle_make,
+                  (sel.row as RentalSubmission).vehicle_model,
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              : (sel.row as RentalProvider).company_name
+            : ""
+        }
+        subtitle={
+          sel
+            ? `${sel.row.contact_name} · ${sel.row.contact_email}${
+                sel.row.contact_phone
+                  ? ` · ${sel.row.contact_phone}`
+                  : ""
+              }`
+            : undefined
+        }
+      >
+        {sel && (
+          <>
 
             <div className="flex flex-wrap gap-2 mb-5">
               {RENTAL_STATUSES.map((s) => (
@@ -358,9 +358,9 @@ export default function RentalsPage() {
                 className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)] resize-y"
               />
             </div>
-          </aside>
-        </>
-      )}
+          </>
+        )}
+      </AdminDrawer>
 
       <ImageLightbox src={lightbox} onClose={() => setLightbox(null)} />
     </div>
