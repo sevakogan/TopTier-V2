@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { PipelineItem, PipelineStage } from "@/lib/backend/pipeline";
 import {
   PersonDrawer,
   type DrawerTarget,
 } from "@/components/admin/person-drawer";
+import { useAdminPipeline } from "@/components/admin/admin-data";
 
 type ViewMode = "board" | "table";
 
@@ -78,9 +79,7 @@ function toTarget(item: PipelineItem): DrawerTarget {
 }
 
 export default function PipelinePage() {
-  const [items, setItems] = useState<PipelineItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { items, loading, error, refetch } = useAdminPipeline();
   const [view, setView] = useState<ViewMode>("board");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [isMobile, setIsMobile] = useState(false);
@@ -88,42 +87,11 @@ export default function PipelinePage() {
   const [moveError, setMoveError] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
 
-  const fetchPipeline = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) {
-        setError("Session expired. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-      const res = await fetch("/api/admin/pipeline", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        setError("Could not load the pipeline.");
-        setLoading(false);
-        return;
-      }
-      const payload = (await res.json()) as { items?: PipelineItem[] };
-      setItems(payload.items ?? []);
-    } catch {
-      setError("Could not load the pipeline.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     const mobile = window.matchMedia("(max-width: 760px)").matches;
     setIsMobile(mobile);
     setView(mobile ? "table" : "board");
-    fetchPipeline();
-  }, [fetchPipeline]);
+  }, []);
 
   async function moveItem(item: PipelineItem, to: PipelineStage) {
     setMoveError(null);
@@ -161,7 +129,7 @@ export default function PipelinePage() {
     } catch {
       setMoveError("Something went wrong. Please try again.");
     } finally {
-      await fetchPipeline();
+      await refetch();
     }
   }
 
@@ -244,8 +212,9 @@ export default function PipelinePage() {
         </div>
       )}
 
-      {/* Loading */}
-      {loading ? (
+      {/* Skeleton only on the very first load (no cached data yet) —
+          revalidation after navigation/mutation never flashes it. */}
+      {loading && items.length === 0 ? (
         <div className="flex gap-3 overflow-hidden">
           {[1, 2, 3, 4].map((i) => (
             <div
@@ -254,14 +223,14 @@ export default function PipelinePage() {
             />
           ))}
         </div>
-      ) : error ? (
+      ) : error && items.length === 0 ? (
         <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111111] p-12 text-center">
           <p className="text-[13px] text-[rgba(245,245,240,0.45)] mb-4">
             {error}
           </p>
           <button
             type="button"
-            onClick={fetchPipeline}
+            onClick={refetch}
             className="rounded-lg border border-[rgba(255,255,255,0.07)] px-5 py-2 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
           >
             Retry
@@ -397,7 +366,7 @@ export default function PipelinePage() {
       <PersonDrawer
         target={drawer}
         onClose={() => setDrawer(null)}
-        onChanged={fetchPipeline}
+        onChanged={refetch}
       />
     </div>
   );

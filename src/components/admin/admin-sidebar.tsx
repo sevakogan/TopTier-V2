@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAdminPipeline } from "@/components/admin/admin-data";
 
 type UserInfo = {
   name: string;
@@ -18,54 +19,27 @@ const MANAGEMENT_LINKS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { items } = useAdminPipeline();
   const [user, setUser] = useState<UserInfo>({ name: "", email: "" });
-  const [pendingCount, setPendingCount] = useState(0);
 
+  // Badge is derived from the shared pipeline cache — no per-navigation
+  // refetch, so switching tabs never reloads the sidebar.
+  const pendingCount = items.filter((i) => i.stage === "New").length;
+
+  // User identity is read once; it doesn't change between tabs.
   useEffect(() => {
     let active = true;
-
-    async function loadData() {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!active) return;
-
-        if (session?.user) {
-          setUser({
-            name: session.user.user_metadata?.full_name ?? "Admin",
-            email: session.user.email ?? "",
-          });
-        }
-
-        const token = session?.access_token;
-        if (!token) return;
-
-        const res = await fetch("/api/admin/pipeline", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-
-        const payload = (await res.json()) as {
-          items?: { stage: string }[];
-        };
-        if (!active) return;
-
-        const newCount = (payload.items ?? []).filter(
-          (i) => i.stage === "New"
-        ).length;
-        setPendingCount(newCount);
-      } catch {
-        // Silent — badge simply stays hidden.
-      }
-    }
-
-    loadData();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active || !session?.user) return;
+      setUser({
+        name: session.user.user_metadata?.full_name ?? "Admin",
+        email: session.user.email ?? "",
+      });
+    });
     return () => {
       active = false;
     };
-  }, [pathname]);
+  }, []);
 
   function isActive(href: string): boolean {
     if (href === "/admin") {
