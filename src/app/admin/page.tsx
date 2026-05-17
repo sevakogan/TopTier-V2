@@ -98,6 +98,14 @@ export default function PipelinePage() {
   const [planModal, setPlanModal] = useState<PipelineItem | null>(null);
   const [planId, setPlanId] = useState("");
   const [busy, setBusy] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inv, setInv] = useState({
+    first: "",
+    last: "",
+    email: "",
+    phone: "",
+  });
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const mobile = window.matchMedia("(max-width: 760px)").matches;
@@ -232,10 +240,21 @@ export default function PipelinePage() {
 
   return (
     <div>
-      <div className="mb-1">
+      <div className="mb-1 flex items-start justify-between gap-3">
         <h1 className="text-[22px] font-bold leading-tight text-[#F5F5F0]">
           Pipeline
         </h1>
+        <button
+          type="button"
+          onClick={() => {
+            setInv({ first: "", last: "", email: "", phone: "" });
+            setCopied(false);
+            setInviteOpen(true);
+          }}
+          className="rounded-lg bg-[#C9A84C] px-4 py-2.5 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965]"
+        >
+          + Invite
+        </button>
       </div>
       <p className="text-[13px] text-[rgba(245,245,240,0.45)] mb-5">
         Leads move through the funnel; the moment they become an active
@@ -514,6 +533,132 @@ export default function PipelinePage() {
           </div>
         </>
       )}
+
+      {/* Invite to a free Garage Pass — name + Email / SMS / Copy link.
+          No backend write: once they sign up they appear in Clients. */}
+      {inviteOpen &&
+        (() => {
+          const origin =
+            typeof window !== "undefined"
+              ? window.location.origin
+              : "";
+          const link = `${origin}/join`;
+          const who = inv.first.trim() || "there";
+          const msg = `Hi ${who}, you're invited to Top Tier Miami Club — set up your free Garage Pass here: ${link}`;
+          const mailto = `mailto:${encodeURIComponent(
+            inv.email
+          )}?subject=${encodeURIComponent(
+            "Your Top Tier Miami Club invite"
+          )}&body=${encodeURIComponent(msg)}`;
+          const smsHref = `sms:${inv.phone}?&body=${encodeURIComponent(
+            msg
+          )}`;
+          return (
+            <>
+              <div
+                onClick={() => setInviteOpen(false)}
+                className="fixed inset-0 bg-black/60 z-40"
+              />
+              <div className="fixed left-1/2 top-1/2 z-50 w-[460px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[#0d0d0d] p-7 shadow-2xl">
+                <h2 className="text-[18px] font-bold text-[#F5F5F0] mb-1">
+                  Invite to Garage Pass
+                </h2>
+                <p className="text-[12px] text-[rgba(245,245,240,0.45)] mb-5">
+                  Send a personal nudge to create a free Garage Pass
+                  (basic membership). They’ll show up under Clients once
+                  they sign up.
+                </p>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <input
+                    placeholder="First name"
+                    value={inv.first}
+                    onChange={(e) =>
+                      setInv({ ...inv, first: e.target.value })
+                    }
+                    className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]"
+                  />
+                  <input
+                    placeholder="Last name"
+                    value={inv.last}
+                    onChange={(e) =>
+                      setInv({ ...inv, last: e.target.value })
+                    }
+                    className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]"
+                  />
+                  <input
+                    placeholder="Email (for Email invite)"
+                    value={inv.email}
+                    onChange={(e) =>
+                      setInv({ ...inv, email: e.target.value })
+                    }
+                    className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]"
+                  />
+                  <input
+                    placeholder="Phone (for SMS invite)"
+                    value={inv.phone}
+                    onChange={(e) =>
+                      setInv({ ...inv, phone: e.target.value })
+                    }
+                    className="rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    href={mailto}
+                    aria-disabled={!inv.email}
+                    onClick={(e) => {
+                      if (!inv.email) e.preventDefault();
+                    }}
+                    className={`rounded-lg px-3.5 py-2.5 text-[12px] font-semibold ${
+                      inv.email
+                        ? "bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#d8b965]"
+                        : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,240,0.3)] cursor-not-allowed"
+                    }`}
+                  >
+                    Email
+                  </a>
+                  <a
+                    href={smsHref}
+                    aria-disabled={!inv.phone}
+                    onClick={(e) => {
+                      if (!inv.phone) e.preventDefault();
+                    }}
+                    className={`rounded-lg px-3.5 py-2.5 text-[12px] font-semibold ${
+                      inv.phone
+                        ? "border border-[rgba(255,255,255,0.2)] text-[#F5F5F0] hover:border-[rgba(201,168,76,0.5)]"
+                        : "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,240,0.3)] cursor-not-allowed"
+                    }`}
+                  >
+                    SMS
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard
+                        .writeText(link)
+                        .then(() => {
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 1800);
+                        })
+                        .catch(() => setCopied(false));
+                    }}
+                    className="rounded-lg border border-[rgba(255,255,255,0.2)] px-3.5 py-2.5 text-[12px] font-semibold text-[#F5F5F0] hover:border-[rgba(201,168,76,0.5)]"
+                  >
+                    {copied ? "Link copied ✓" : "Copy link"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInviteOpen(false)}
+                    className="ml-auto rounded-lg px-3.5 py-2.5 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
       <PersonDrawer
         target={drawer}

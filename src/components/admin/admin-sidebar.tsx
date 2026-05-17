@@ -13,12 +13,6 @@ type UserInfo = {
 
 const MANAGEMENT_LINKS = [
   { href: "/admin", label: "Pipeline", icon: "📊", showBadge: true },
-  {
-    href: "/admin/invites",
-    label: "Invitations",
-    icon: "✉️",
-    showBadge: false,
-  },
   { href: "/admin/events", label: "Events", icon: "📅", showBadge: false },
   {
     href: "/admin/invite-codes",
