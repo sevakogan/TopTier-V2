@@ -7,6 +7,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+// Module-level cache (lives for the SPA session). Returning to a tab
+// paints cached data instantly while it revalidates in the background —
+// so sidebar navigation never flashes a skeleton / feels like a reload.
+const resourceCache = new Map<string, unknown>();
+
 async function token(): Promise<string | null> {
   try {
     const {
@@ -19,8 +24,11 @@ async function token(): Promise<string | null> {
 }
 
 export function useAdminResource<T>(path: string, key: string) {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `${path}::${key}`;
+  const cached = (resourceCache.get(cacheKey) as T | undefined) ?? null;
+  const [data, setData] = useState<T | null>(cached);
+  // Only show the skeleton on the very first ever load of this resource.
+  const [loading, setLoading] = useState(cached === null);
   const [error, setError] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
@@ -42,13 +50,15 @@ export function useAdminResource<T>(path: string, key: string) {
       }
       const payload = await res.json();
       // key === "" → consume the whole payload (multi-field endpoints).
-      setData(key ? (payload[key] ?? null) : payload);
+      const next = key ? (payload[key] ?? null) : payload;
+      resourceCache.set(cacheKey, next);
+      setData(next);
     } catch {
       setError("Could not load this data.");
     } finally {
       setLoading(false);
     }
-  }, [path, key]);
+  }, [path, key, cacheKey]);
 
   useEffect(() => {
     void refetch();
