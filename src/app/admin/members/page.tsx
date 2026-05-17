@@ -3,18 +3,25 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import type { Member, MemberTier, MemberStatus } from "@/types";
+import type { AdminMember } from "@/lib/backend/types";
 
-const TIER_CLASSES: Record<MemberTier, string> = {
+const DEFAULT_BADGE = "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,240,0.45)]";
+
+const TIER_CLASSES: Record<string, string> = {
   Core: "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]",
   VIP: "bg-[rgba(168,85,247,0.15)] text-[#a855f7]",
-  Strategic: "bg-[rgba(59,130,246,0.15)] text-[#3b82f6]",
+  "Strategic Circle": "bg-[rgba(59,130,246,0.15)] text-[#3b82f6]",
+  "Garage Pass": DEFAULT_BADGE,
 };
 
-const STATUS_CLASSES: Record<MemberStatus, string> = {
-  Active: "bg-[rgba(34,197,94,0.15)] text-[#22c55e]",
-  Expired: "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
-  Suspended: "bg-[rgba(239,68,68,0.15)] text-[#ef4444]",
+const STATUS_CLASSES: Record<string, string> = {
+  ACTIVE: "bg-[rgba(34,197,94,0.15)] text-[#22c55e]",
+  PAST_DUE: "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
+  EXPIRED: "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
+  PENDING: "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
+  REJECTED: "bg-[rgba(239,68,68,0.15)] text-[#ef4444]",
+  SUSPENDED: "bg-[rgba(239,68,68,0.15)] text-[#ef4444]",
+  TERMINATED: "bg-[rgba(239,68,68,0.15)] text-[#ef4444]",
 };
 
 function SkeletonRow() {
@@ -29,18 +36,55 @@ function SkeletonRow() {
   );
 }
 
+type MemberRow = {
+  id: string;
+  name: string;
+  email: string;
+  car: string | null;
+  tierDisplay: string;
+  membershipStatus: string;
+  joined_at: string | null;
+};
+
+function mapMember(m: AdminMember): MemberRow {
+  return {
+    id: m.memberProfileId,
+    name: m.name,
+    email: m.email,
+    car: null,
+    tierDisplay: m.tierDisplay,
+    membershipStatus: m.membershipStatus ?? "PENDING",
+    joined_at: m.startedAt,
+  };
+}
+
 export default function AdminMembersPage() {
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<MemberRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchMembers = useCallback(async () => {
-    const { data } = await supabase
-      .from("members")
-      .select("*")
-      .order("joined_at", { ascending: false });
+    let rows: MemberRow[] = [];
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-    setMembers((data ?? []) as Member[]);
+      if (token) {
+        const res = await fetch("/api/admin/members", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const payload = (await res.json()) as { members?: AdminMember[] };
+          rows = (payload.members ?? []).map(mapMember);
+        }
+      }
+    } catch {
+      // Silent fallback — degrade to empty roster.
+    }
+
+    setMembers(rows);
     setLoading(false);
   }, []);
 
@@ -147,24 +191,34 @@ export default function AdminMembersPage() {
                     </td>
                     <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)]">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${TIER_CLASSES[member.tier]}`}
+                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${
+                          TIER_CLASSES[member.tierDisplay] ?? DEFAULT_BADGE
+                        }`}
                       >
-                        {member.tier.toUpperCase()}
+                        {member.tierDisplay.toUpperCase()}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)]">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${STATUS_CLASSES[member.status]}`}
+                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${
+                          STATUS_CLASSES[member.membershipStatus] ??
+                          DEFAULT_BADGE
+                        }`}
                       >
-                        {member.status.toUpperCase()}
+                        {member.membershipStatus.toUpperCase()}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)] text-[rgba(245,245,240,0.45)]">
-                      {new Date(member.joined_at).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
+                      {member.joined_at
+                        ? new Date(member.joined_at).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )
+                        : "—"}
                     </td>
                   </tr>
                 </Link>

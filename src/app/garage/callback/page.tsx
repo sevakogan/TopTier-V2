@@ -24,38 +24,8 @@ export default function GarageCallbackPage() {
           return;
         }
 
-        const { data: existing } = await supabase
-          .from("members")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!existing) {
-          const metadata = user.user_metadata ?? {};
-          const name =
-            (typeof metadata.full_name === "string" && metadata.full_name) ||
-            (typeof metadata.name === "string" && metadata.name) ||
-            (user.email ? user.email.split("@")[0] : "Member");
-
-          const { error: insertError } = await supabase
-            .from("members")
-            .insert({
-              user_id: user.id,
-              name,
-              email: user.email ?? "",
-              tier: "garage",
-              status: "garage_pass",
-            });
-
-          if (insertError) {
-            setError(
-              "We couldn't finish setting up your Garage Pass. Please try again."
-            );
-            handledRef.current = false;
-            return;
-          }
-        }
-
+        // V1's DB trigger auto-creates the profiles row on signup —
+        // the callback creates nothing, it only routes into the Garage.
         router.push("/garage");
       } catch {
         setError("Something went wrong. Please try again.");

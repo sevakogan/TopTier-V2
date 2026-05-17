@@ -3,15 +3,49 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import type { Application, ApplicationStatus } from "@/types";
+import type { AdminApplicant, V1InviteStatus } from "@/lib/backend/types";
+
+type UiStatus = "pending" | "approved" | "rejected";
+
+type Application = {
+  id: string;
+  name: string;
+  email: string;
+  car: string | null;
+  instagram: string | null;
+  source: string | null;
+  status: UiStatus;
+  created_at: string;
+};
 
 type TabKey = "new" | "pre-approved" | "rejected";
 
-const TABS: { key: TabKey; label: string; status: ApplicationStatus }[] = [
+const TABS: { key: TabKey; label: string; status: UiStatus }[] = [
   { key: "new", label: "New", status: "pending" },
   { key: "pre-approved", label: "Pre-Approved", status: "approved" },
   { key: "rejected", label: "Rejected", status: "rejected" },
 ];
+
+// V1 invite_requests lifecycle -> the 3 admin tabs.
+function toUiStatus(status: V1InviteStatus): UiStatus {
+  if (status === "REJECTED") return "rejected";
+  if (status === "PENDING") return "pending";
+  return "approved"; // APPROVED + CONVERTED both surface as "Pre-Approved"
+}
+
+function mapApplicant(a: AdminApplicant): Application {
+  const name = `${a.firstName} ${a.lastName}`.trim() || a.email;
+  return {
+    id: a.id,
+    name,
+    email: a.email,
+    car: a.car,
+    instagram: a.instagram,
+    source: a.referredBy,
+    status: toUiStatus(a.status),
+    created_at: a.createdAt,
+  };
+}
 
 type Stats = {
   pending: number;
@@ -144,12 +178,30 @@ export default function AdminApplicationsPage() {
   const [updating, setUpdating] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    const { data } = await supabase
-      .from("applications")
-      .select("*")
-      .order("created_at", { ascending: false });
+    let apps: Application[] = [];
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
 
-    const apps = (data ?? []) as Application[];
+      if (token) {
+        const res = await fetch("/api/admin/applicants", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const payload = (await res.json()) as {
+            applicants?: AdminApplicant[];
+          };
+          apps = (payload.applicants ?? [])
+            .map(mapApplicant)
+            .sort((a, b) => b.created_at.localeCompare(a.created_at));
+        }
+      }
+    } catch {
+      // Silent fallback — degrade to empty list.
+    }
+
     setApplications(apps);
 
     const weekStart = getWeekStart();
@@ -173,39 +225,64 @@ export default function AdminApplicationsPage() {
     fetchData();
   }, [fetchData]);
 
+  async function postStatus(
+    id: string,
+    status: V1InviteStatus
+  ): Promise<boolean> {
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return false;
+
+      const res = await fetch("/api/admin/applicants", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id, status }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async function handlePreApprove(id: string) {
     setUpdating(id);
-    await supabase
-      .from("applications")
-      .update({ status: "approved" })
-      .eq("id", id);
-
-    setApplications((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: "approved" as const } : a))
-    );
-    setStats((prev) => ({
-      ...prev,
-      pending: prev.pending - 1,
-      approvedThisWeek: prev.approvedThisWeek + 1,
-    }));
+    const ok = await postStatus(id, "APPROVED");
+    if (ok) {
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.id === id ? { ...a, status: "approved" as const } : a
+        )
+      );
+      setStats((prev) => ({
+        ...prev,
+        pending: prev.pending - 1,
+        approvedThisWeek: prev.approvedThisWeek + 1,
+      }));
+    }
     setUpdating(null);
   }
 
   async function handleReject(id: string) {
     setUpdating(id);
-    await supabase
-      .from("applications")
-      .update({ status: "rejected" })
-      .eq("id", id);
-
-    setApplications((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: "rejected" as const } : a))
-    );
-    setStats((prev) => ({
-      ...prev,
-      pending: prev.pending - 1,
-      rejected: prev.rejected + 1,
-    }));
+    const ok = await postStatus(id, "REJECTED");
+    if (ok) {
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.id === id ? { ...a, status: "rejected" as const } : a
+        )
+      );
+      setStats((prev) => ({
+        ...prev,
+        pending: prev.pending - 1,
+        rejected: prev.rejected + 1,
+      }));
+    }
     setUpdating(null);
   }
 

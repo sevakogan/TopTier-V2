@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-
-type MemberRow = {
-  name: string | null;
-  status: string | null;
-  tier: string | null;
-};
+import { getMemberSnapshot } from "@/lib/backend/membership";
+import { listActivePartners, summarizeByCategory } from "@/lib/backend/partners";
+import type { AccountStage } from "@/lib/backend/types";
 
 type EventTeaser = {
   id: string;
@@ -21,16 +19,6 @@ type PerkCategoryTeaser = {
   label: string;
   count: number;
 };
-
-const PAID_TIERS = new Set(["Core", "VIP", "Strategic"]);
-
-const PERK_CATEGORY_LABELS: Record<string, string> = {
-  automotive: "AUTOMOTIVE",
-  dining: "DINING & NIGHTLIFE",
-  lifestyle: "LIFESTYLE",
-};
-
-const PERK_CATEGORY_ORDER = ["automotive", "dining", "lifestyle"];
 
 function Lock({ className = "" }: { className?: string }) {
   return (
@@ -79,14 +67,20 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+const STATIC_MEMBER_COUNT = 50;
+
 export default function GaragePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [member, setMember] = useState<MemberRow | null>(null);
+  const [stage, setStage] = useState<AccountStage>("garage_pass");
+  const [tierDisplay, setTierDisplay] = useState<string>("Garage Pass");
+  const [appliedTier, setAppliedTier] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState("Driver");
   const [events, setEvents] = useState<EventTeaser[]>([]);
   const [perkCategories, setPerkCategories] = useState<PerkCategoryTeaser[]>(
     []
   );
-  const [memberCount, setMemberCount] = useState(0);
+  const [memberCount, setMemberCount] = useState(STATIC_MEMBER_COUNT);
 
   useEffect(() => {
     let active = true;
@@ -94,39 +88,43 @@ export default function GaragePage() {
     async function load() {
       try {
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        if (!user) {
-          setLoading(false);
+        const user = session?.user;
+        if (!session || !user) {
+          router.push("/join");
           return;
         }
 
+        const meta = user.user_metadata ?? {};
+        const name =
+          (typeof meta.full_name === "string" && meta.full_name) ||
+          (typeof meta.name === "string" && meta.name) ||
+          (user.email ? user.email.split("@")[0] : "Driver");
+        if (active) setFirstName(name.split(" ")[0] || "Driver");
+
         const today = new Date().toISOString().split("T")[0];
 
-        const [memberRes, eventsRes, perksRes, countRes] = await Promise.all([
-          supabase
-            .from("members")
-            .select("name, status, tier")
-            .eq("user_id", user.id)
-            .maybeSingle(),
+        const [snapshot, partners, eventsRes, countRes] = await Promise.all([
+          getMemberSnapshot(user.id, user.email ?? ""),
+          listActivePartners(),
           supabase
             .from("events")
             .select("id, name, date, is_public")
             .gte("date", today)
             .order("date", { ascending: true }),
-          supabase.from("perks").select("category, is_active"),
           supabase
-            .from("members")
+            .from("member_profiles")
             .select("id", { count: "exact", head: true })
-            .eq("status", "active"),
+            .eq("membership_status", "ACTIVE"),
         ]);
 
         if (!active) return;
 
-        if (memberRes.data) {
-          setMember(memberRes.data as MemberRow);
-        }
+        setStage(snapshot.stage);
+        setTierDisplay(snapshot.tierDisplay);
+        setAppliedTier(snapshot.appliedTier);
 
         const rawEvents = (eventsRes.data ?? []) as Array<{
           id: string;
@@ -148,27 +146,18 @@ export default function GaragePage() {
           }));
         setEvents(teaserEvents);
 
-        const rawPerks = (perksRes.data ?? []) as Array<{
-          category: string | null;
-          is_active: boolean | null;
-        }>;
-        const counts = new Map<string, number>();
-        for (const perk of rawPerks) {
-          if (perk.is_active === false) continue;
-          const key = (perk.category ?? "").toLowerCase();
-          if (!PERK_CATEGORY_LABELS[key]) continue;
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-        }
-        const categories: PerkCategoryTeaser[] = PERK_CATEGORY_ORDER.filter(
-          (key) => counts.has(key)
-        ).map((key) => ({
-          key,
-          label: PERK_CATEGORY_LABELS[key],
-          count: counts.get(key) ?? 0,
+        const categories: PerkCategoryTeaser[] = summarizeByCategory(
+          partners
+        ).map(({ category, count }) => ({
+          key: category,
+          label: category.toUpperCase(),
+          count,
         }));
         setPerkCategories(categories);
 
-        setMemberCount(countRes.count ?? 0);
+        if (typeof countRes.count === "number" && !countRes.error) {
+          setMemberCount(countRes.count);
+        }
       } catch {
         // Silent fallback — the dashboard degrades to empty states.
       } finally {
@@ -181,7 +170,7 @@ export default function GaragePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -193,19 +182,16 @@ export default function GaragePage() {
     );
   }
 
-  const firstName = (member?.name ?? "Driver").split(" ")[0];
-  const status = member?.status ?? "garage_pass";
-  const tier = member?.tier ?? "garage";
-
-  const isPaidMember = PAID_TIERS.has(tier);
-  const isPending = status === "pending_membership";
+  const isPaidMember = stage === "member";
+  const isPending = stage === "applied";
+  const appliedTierDisplay = appliedTier ? appliedTier.toUpperCase() : null;
 
   function ConversionBlock() {
     if (isPaidMember) {
       return (
         <div className="rounded-xl border border-[rgba(201,168,76,0.2)] bg-[rgba(201,168,76,0.04)] px-8 py-10 text-center">
           <p className="font-cormorant text-2xl font-bold text-[#F5F5F0]">
-            You&apos;re a {tier} member
+            You&apos;re a {tierDisplay} member
           </p>
           <p className="mt-3 text-[14px] text-[rgba(245,245,240,0.45)]">
             Your full member dashboard is coming soon.
@@ -220,6 +206,11 @@ export default function GaragePage() {
           <p className="font-cormorant text-2xl font-bold text-[#F5F5F0]">
             Application under review
           </p>
+          {appliedTierDisplay && (
+            <p className="mt-3 text-[11px] uppercase tracking-[3px] text-[#C9A84C]">
+              {appliedTierDisplay}
+            </p>
+          )}
           <p className="mt-3 text-[14px] text-[rgba(245,245,240,0.45)]">
             We respond within 48 hours. Keep an eye on your inbox.
           </p>
@@ -254,7 +245,7 @@ export default function GaragePage() {
           Welcome to the Garage, {firstName}
         </h1>
         <span className="rounded-full border border-[rgba(201,168,76,0.4)] px-4 py-1.5 text-[10px] uppercase tracking-[3px] text-[#C9A84C]">
-          {isPaidMember ? `${tier} Member` : "Garage Pass"}
+          {isPaidMember ? `${tierDisplay} Member` : "Garage Pass"}
         </span>
       </div>
 

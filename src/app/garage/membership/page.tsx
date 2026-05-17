@@ -1,14 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-
-type MemberRow = {
-  status: string | null;
-  tier: string | null;
-  membership_interest: string | null;
-};
+import { getMemberSnapshot } from "@/lib/backend/membership";
+import type { AccountStage } from "@/lib/backend/types";
 
 type TierKey = "Core" | "VIP" | "Strategic";
 
@@ -20,8 +17,6 @@ type Tier = {
   popular: boolean;
   features: string[];
 };
-
-const PAID_TIERS = new Set<string>(["Core", "VIP", "Strategic"]);
 
 const TIERS: Tier[] = [
   {
@@ -177,8 +172,11 @@ function AlreadyMemberState({ tier }: { tier: string }) {
 }
 
 export default function MembershipPage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [member, setMember] = useState<MemberRow | null>(null);
+  const [stage, setStage] = useState<AccountStage>("garage_pass");
+  const [memberTierDisplay, setMemberTierDisplay] = useState<string>("");
+  const [appliedTier, setAppliedTier] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState<TierKey | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -190,25 +188,24 @@ export default function MembershipPage() {
     async function load() {
       try {
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
+          data: { session },
+        } = await supabase.auth.getSession();
 
-        if (!user) {
-          if (active) setLoading(false);
+        const user = session?.user;
+        if (!session || !user) {
+          router.push("/join");
           return;
         }
 
-        const { data } = await supabase
-          .from("members")
-          .select("status, tier, membership_interest")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const snapshot = await getMemberSnapshot(user.id, user.email ?? "");
 
         if (!active) return;
 
-        if (data) {
-          setMember(data as MemberRow);
-        }
+        setStage(snapshot.stage);
+        setMemberTierDisplay(snapshot.tierDisplay);
+        setAppliedTier(
+          snapshot.appliedTier ? snapshot.appliedTier.toUpperCase() : null
+        );
       } catch {
         // Silent fallback — the page degrades to the application form.
       } finally {
@@ -221,7 +218,7 @@ export default function MembershipPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [router]);
 
   async function handleSubmit() {
     if (!selectedTier || submitting) return;
@@ -231,33 +228,43 @@ export default function MembershipPage() {
 
     try {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!user) {
+      const token = session?.access_token;
+      if (!session || !token) {
         setError("Your session expired. Please sign in again.");
         setSubmitting(false);
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("members")
-        .update({
-          status: "pending_membership",
-          membership_interest: selectedTier,
-          applied_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
+      const res = await fetch("/api/membership-apply", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tier: selectedTier }),
+      });
 
-      if (updateError) {
-        setError(
-          "We couldn't submit your application. Please try again in a moment."
-        );
-        setSubmitting(false);
+      if (res.ok) {
+        setSubmitted(true);
         return;
       }
 
-      setSubmitted(true);
+      let message =
+        "We couldn't submit your application. Please try again in a moment.";
+      try {
+        const payload = (await res.json()) as { error?: string };
+        if (payload?.error) message = payload.error;
+      } catch {
+        // Keep the default message if the body isn't JSON.
+      }
+
+      // 409 (already applied) and other non-OK responses are non-fatal —
+      // surface the message in the existing inline error UI.
+      setError(message);
+      setSubmitting(false);
     } catch {
       setError(
         "We couldn't submit your application. Please try again in a moment."
@@ -276,19 +283,16 @@ export default function MembershipPage() {
     );
   }
 
-  const status = member?.status ?? "garage_pass";
-  const tier = member?.tier ?? "garage";
-
-  if (PAID_TIERS.has(tier)) {
-    return <AlreadyMemberState tier={tier} />;
+  if (stage === "member") {
+    return <AlreadyMemberState tier={memberTierDisplay} />;
   }
 
   if (submitted) {
     return <ReviewState tier={selectedTier} />;
   }
 
-  if (status === "pending_membership") {
-    return <ReviewState tier={member?.membership_interest ?? null} />;
+  if (stage === "applied") {
+    return <ReviewState tier={appliedTier} />;
   }
 
   return (

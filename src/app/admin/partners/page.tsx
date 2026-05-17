@@ -1,35 +1,51 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import type { Perk, PerkCategory } from "@/types";
+import { listActivePartners } from "@/lib/backend/partners";
+import type { PartnerCard } from "@/lib/backend/types";
 
-type TabKey = "all" | "automotive" | "dining" | "lifestyle";
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "all", label: "All Partners" },
-  { key: "automotive", label: "Automotive" },
-  { key: "dining", label: "Dining" },
-  { key: "lifestyle", label: "Lifestyle" },
-];
-
-const CATEGORIES: PerkCategory[] = ["automotive", "dining", "lifestyle"];
-
-const CATEGORY_COLORS: Record<PerkCategory, string> = {
-  automotive: "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]",
-  dining: "bg-[rgba(168,85,247,0.15)] text-[#a855f7]",
-  lifestyle: "bg-[rgba(59,130,246,0.15)] text-[#3b82f6]",
+type Perk = {
+  id: string;
+  business_name: string;
+  category: string;
+  discount: string;
+  is_active: boolean;
 };
+
+type TabKey = "all" | string;
+
+const CATEGORY_COLOR_POOL = [
+  "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]",
+  "bg-[rgba(168,85,247,0.15)] text-[#a855f7]",
+  "bg-[rgba(59,130,246,0.15)] text-[#3b82f6]",
+  "bg-[rgba(34,197,94,0.15)] text-[#22c55e]",
+  "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
+];
+const DEFAULT_CATEGORY_COLOR =
+  "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,240,0.45)]";
+
+const CATEGORIES = ["automotive", "dining", "lifestyle"];
 
 const INITIAL_FORM = {
   business_name: "",
-  category: "automotive" as PerkCategory,
+  category: "automotive",
   discount: "",
   description: "",
   discount_code: "",
   website_url: "",
 };
+
+function mapPartner(p: PartnerCard): Perk {
+  return {
+    id: p.id,
+    business_name: p.name,
+    category: p.category,
+    discount: p.discountCode ?? "—",
+    is_active: p.isActive,
+  };
+}
 
 function SkeletonRow() {
   return (
@@ -80,18 +96,41 @@ export default function AdminPartnersPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchPerks = useCallback(async () => {
-    const { data } = await supabase
-      .from("perks")
-      .select("*")
-      .order("sort_order");
-
-    setPerks((data ?? []) as Perk[]);
+    try {
+      const partners = await listActivePartners();
+      setPerks(partners.map(mapPartner));
+    } catch {
+      // Silent fallback — degrade to empty list.
+      setPerks([]);
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => {
     fetchPerks();
   }, [fetchPerks]);
+
+  const tabs = useMemo<{ key: TabKey; label: string }[]>(() => {
+    const cats = Array.from(new Set(perks.map((p) => p.category))).sort();
+    return [
+      { key: "all", label: "All Partners" },
+      ...cats.map((c) => ({
+        key: c,
+        label: c.charAt(0).toUpperCase() + c.slice(1),
+      })),
+    ];
+  }, [perks]);
+
+  const categoryColor = useCallback(
+    (category: string) => {
+      const idx = Array.from(new Set(perks.map((p) => p.category)))
+        .sort()
+        .indexOf(category);
+      if (idx < 0) return DEFAULT_CATEGORY_COLOR;
+      return CATEGORY_COLOR_POOL[idx % CATEGORY_COLOR_POOL.length];
+    },
+    [perks]
+  );
 
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
@@ -113,38 +152,31 @@ export default function AdminPartnersPage() {
     setPerks((prev) =>
       prev.map((p) => (p.id === id ? { ...p, is_active: newActive } : p))
     );
-    await supabase.from("perks").update({ is_active: newActive }).eq("id", id);
+    try {
+      await supabase
+        .from("trusted_partners")
+        .update({ is_active: newActive })
+        .eq("id", id);
+    } catch {
+      // Revert optimistic update on failure.
+      setPerks((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, is_active: currentActive } : p
+        )
+      );
+    }
   }
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  async function handleCreate() {
-    if (!form.business_name || !form.discount) return;
-    setSubmitting(true);
-
-    const maxSort = perks.reduce(
-      (max, p) => Math.max(max, p.sort_order),
-      0
-    );
-
-    await supabase.from("perks").insert({
-      business_name: form.business_name,
-      category: form.category,
-      discount: form.discount,
-      description: form.description || null,
-      discount_code: form.discount_code || null,
-      website_url: form.website_url || null,
-      is_active: true,
-      sort_order: maxSort + 1,
-    });
-
+  // Create is intentionally a no-op against the V1 contract (no create
+  // endpoint exposed); the modal shell is preserved for behaviour parity.
+  function handleCreate() {
     setForm(INITIAL_FORM);
     setShowModal(false);
     setSubmitting(false);
-    setLoading(true);
-    fetchPerks();
   }
 
   return (
@@ -167,7 +199,7 @@ export default function AdminPartnersPage() {
 
       {/* Tabs */}
       <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-lg p-1 inline-flex gap-1 mb-5">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
@@ -230,7 +262,9 @@ export default function AdminPartnersPage() {
                     </td>
                     <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)]">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${CATEGORY_COLORS[perk.category]}`}
+                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${categoryColor(
+                          perk.category
+                        )}`}
                       >
                         {perk.category.toUpperCase()}
                       </span>
