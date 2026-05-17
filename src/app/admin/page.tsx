@@ -79,7 +79,7 @@ function toTarget(item: PipelineItem): DrawerTarget {
 }
 
 export default function PipelinePage() {
-  const { items, loading, error, refetch } = useAdminPipeline();
+  const { items, loading, error, refetch, loadPerson } = useAdminPipeline();
   const [view, setView] = useState<ViewMode>("board");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [isMobile, setIsMobile] = useState(false);
@@ -275,6 +275,12 @@ export default function PipelinePage() {
                         draggable={canDrag}
                         onDragStart={() => setDragId(item.id)}
                         onDragEnd={() => setDragId(null)}
+                        onMouseEnter={() =>
+                          loadPerson(item.type, item.recordId)
+                        }
+                        onPointerDown={() =>
+                          loadPerson(item.type, item.recordId)
+                        }
                         onClick={() => setDrawer(toTarget(item))}
                         className={`mb-2 rounded-[10px] border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 transition-all hover:border-[rgba(201,168,76,0.35)] hover:-translate-y-px ${
                           canDrag ? "cursor-grab" : "cursor-pointer"
@@ -329,6 +335,12 @@ export default function PipelinePage() {
                 visibleItems.map((item) => (
                   <tr
                     key={item.id}
+                    onMouseEnter={() =>
+                      loadPerson(item.type, item.recordId)
+                    }
+                    onPointerDown={() =>
+                      loadPerson(item.type, item.recordId)
+                    }
                     onClick={() => setDrawer(toTarget(item))}
                     className="cursor-pointer hover:bg-[rgba(201,168,76,0.05)]"
                   >

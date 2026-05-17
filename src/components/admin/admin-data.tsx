@@ -14,14 +14,29 @@ import {
   useState,
 } from "react";
 import { supabase } from "@/lib/supabase";
-import type { PipelineItem } from "@/lib/backend/pipeline";
+import type { PipelineItem, PersonType } from "@/lib/backend/pipeline";
+import type { PersonRecord } from "@/lib/backend/person";
 
 interface AdminPipelineState {
   items: PipelineItem[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  /** Synchronous cache read — returns undefined if not warmed yet. */
+  getPerson: (
+    type: PersonType,
+    recordId: string
+  ) => PersonRecord | undefined;
+  /** Fetch + cache a full record. Dedupes in-flight requests. */
+  loadPerson: (
+    type: PersonType,
+    recordId: string,
+    force?: boolean
+  ) => Promise<PersonRecord | null>;
 }
+
+const personKey = (type: PersonType, recordId: string) =>
+  `${type}:${recordId}`;
 
 const AdminPipelineContext = createContext<AdminPipelineState | null>(null);
 
@@ -34,6 +49,62 @@ export function AdminDataProvider({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const loadedRef = useRef(false);
+  const personCache = useRef<Map<string, PersonRecord>>(new Map());
+  const personInflight = useRef<
+    Map<string, Promise<PersonRecord | null>>
+  >(new Map());
+
+  const getPerson = useCallback(
+    (type: PersonType, recordId: string) =>
+      personCache.current.get(personKey(type, recordId)),
+    []
+  );
+
+  const loadPerson = useCallback(
+    async (
+      type: PersonType,
+      recordId: string,
+      force = false
+    ): Promise<PersonRecord | null> => {
+      const key = personKey(type, recordId);
+      if (!force && personCache.current.has(key)) {
+        return personCache.current.get(key) ?? null;
+      }
+      const existing = personInflight.current.get(key);
+      if (existing && !force) return existing;
+
+      const task = (async (): Promise<PersonRecord | null> => {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          const token = session?.access_token;
+          if (!token) return null;
+          const res = await fetch(
+            `/api/admin/person?type=${encodeURIComponent(
+              type
+            )}&id=${encodeURIComponent(recordId)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (!res.ok) return null;
+          const payload = (await res.json()) as {
+            record?: PersonRecord;
+          };
+          const rec = payload.record ?? null;
+          if (rec) personCache.current.set(key, rec);
+          return rec;
+        } catch {
+          return null;
+        } finally {
+          personInflight.current.delete(key);
+        }
+      })();
+
+      personInflight.current.set(key, task);
+      return task;
+    },
+    []
+  );
 
   const refetch = useCallback(async () => {
     setError(null);
@@ -72,7 +143,7 @@ export function AdminDataProvider({
 
   return (
     <AdminPipelineContext.Provider
-      value={{ items, loading, error, refetch }}
+      value={{ items, loading, error, refetch, getPerson, loadPerson }}
     >
       {children}
     </AdminPipelineContext.Provider>

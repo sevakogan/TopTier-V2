@@ -4,6 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { PersonRecord } from "@/lib/backend/person";
 import type { PersonType, PipelineStage } from "@/lib/backend/pipeline";
+import { useAdminPipeline } from "@/components/admin/admin-data";
+
+type DrawerLayout = "side" | "popup";
+const LAYOUT_KEY = "ttmc.drawerLayout";
+
+function readLayout(): DrawerLayout {
+  if (typeof window === "undefined") return "side";
+  return window.localStorage.getItem(LAYOUT_KEY) === "popup"
+    ? "popup"
+    : "side";
+}
 
 type DrawerTarget = {
   type: PersonType;
@@ -62,6 +73,7 @@ export function PersonDrawer({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { getPerson, loadPerson } = useAdminPipeline();
   const open = target !== null;
   const [record, setRecord] = useState<PersonRecord | null>(null);
   const [loading, setLoading] = useState(false);
@@ -71,48 +83,58 @@ export function PersonDrawer({
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(false);
-
-  const loadRecord = useCallback(async () => {
-    if (!target) return;
-    setLoading(true);
-    setError(null);
-    setBanner(null);
-    try {
-      const token = await authToken();
-      if (!token) {
-        setError("Session expired. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-      const res = await fetch(
-        `/api/admin/person?type=${encodeURIComponent(
-          target.type
-        )}&id=${encodeURIComponent(target.recordId)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res.ok) {
-        setError("Could not load this record.");
-        setLoading(false);
-        return;
-      }
-      const payload = (await res.json()) as { record?: PersonRecord };
-      const rec = payload.record ?? null;
-      setRecord(rec);
-      setNotes(rec?.notes ?? "");
-      setNotesEditable(target.type === "member" || target.type === "partner");
-    } catch {
-      setError("Could not load this record.");
-    } finally {
-      setLoading(false);
-    }
-  }, [target]);
+  const [layout, setLayout] = useState<DrawerLayout>("side");
 
   useEffect(() => {
-    if (target) {
+    setLayout(readLayout());
+  }, []);
+
+  function toggleLayout() {
+    setLayout((prev) => {
+      const next: DrawerLayout = prev === "side" ? "popup" : "side";
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(LAYOUT_KEY, next);
+      }
+      return next;
+    });
+  }
+
+  const applyRecord = useCallback(
+    (rec: PersonRecord | null, type: PersonType) => {
+      setRecord(rec);
+      setNotes(rec?.notes ?? "");
+      setNotesEditable(type === "member" || type === "partner");
+    },
+    []
+  );
+
+  const loadRecord = useCallback(
+    async (force = false) => {
+      if (!target) return;
+      setError(null);
+      setBanner(null);
+      const rec = await loadPerson(target.type, target.recordId, force);
+      if (rec) applyRecord(rec, target.type);
+      else setError("Could not load this record.");
+      setLoading(false);
+    },
+    [target, loadPerson, applyRecord]
+  );
+
+  useEffect(() => {
+    if (!target) return;
+    // Instant: paint cached record immediately, no skeleton.
+    const cached = getPerson(target.type, target.recordId);
+    if (cached) {
+      applyRecord(cached, target.type);
+      setLoading(false);
+      void loadRecord(true); // silent background refresh
+    } else {
       setRecord(null);
-      loadRecord();
+      setLoading(true);
+      void loadRecord(false);
     }
-  }, [target, loadRecord]);
+  }, [target, getPerson, applyRecord, loadRecord]);
 
   useEffect(() => {
     if (!open) return;
@@ -148,7 +170,7 @@ export function PersonDrawer({
       });
       if (res.ok) {
         onChanged();
-        await loadRecord();
+        await loadRecord(true);
       } else {
         let msg = "That move isn’t allowed.";
         try {
@@ -192,6 +214,8 @@ export function PersonDrawer({
       if (res.ok) {
         setSavedTick(true);
         setTimeout(() => setSavedTick(false), 1800);
+        // Keep the cache fresh so reopening shows the saved notes.
+        void loadPerson(target.type, target.recordId, true);
       } else if (res.status === 422) {
         setNotesEditable(false);
       } else {
@@ -219,22 +243,45 @@ export function PersonDrawer({
         }`}
       />
 
-      {/* Drawer */}
+      {/* Panel — side drawer or centered popup (user preference) */}
       <aside
-        className={`fixed top-0 right-0 bottom-0 w-full sm:w-[440px] max-w-[92vw] bg-[#0d0d0d] border-l border-[rgba(255,255,255,0.07)] z-50 overflow-y-auto transition-transform duration-300 ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={
+          layout === "popup"
+            ? `fixed left-1/2 top-1/2 z-50 w-[660px] max-w-[94vw] max-h-[88vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#0d0d0d] border border-[rgba(255,255,255,0.07)] overflow-y-auto shadow-2xl transition-all duration-200 ${
+                open
+                  ? "opacity-100 scale-100"
+                  : "opacity-0 scale-95 pointer-events-none"
+              }`
+            : `fixed top-0 right-0 bottom-0 w-full sm:w-[440px] max-w-[92vw] bg-[#0d0d0d] border-l border-[rgba(255,255,255,0.07)] z-50 overflow-y-auto transition-transform duration-300 ${
+                open ? "translate-x-0" : "translate-x-full"
+              }`
+        }
       >
         {target && (
           <div className="p-7">
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="float-right text-[20px] leading-none text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            >
-              ✕
-            </button>
+            <div className="float-right flex items-center gap-2">
+              <button
+                type="button"
+                onClick={toggleLayout}
+                aria-label="Toggle view"
+                title={
+                  layout === "side"
+                    ? "Switch to popup view"
+                    : "Switch to side panel"
+                }
+                className="rounded-md border border-[rgba(255,255,255,0.1)] px-2 py-1 text-[10px] font-semibold tracking-[1px] uppercase text-[rgba(245,245,240,0.45)] hover:text-[#C9A84C] hover:border-[rgba(201,168,76,0.35)] transition-colors"
+              >
+                {layout === "side" ? "⤢ Popup" : "⤡ Side"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="text-[20px] leading-none text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              >
+                ✕
+              </button>
+            </div>
 
             <div className="text-[22px] font-bold leading-tight text-[#F5F5F0]">
               {record?.name ?? target.name}
@@ -327,7 +374,7 @@ export function PersonDrawer({
                 </p>
                 <button
                   type="button"
-                  onClick={loadRecord}
+                  onClick={() => loadRecord(false)}
                   className="rounded-lg border border-[rgba(255,255,255,0.07)] px-4 py-2 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
                 >
                   Retry
