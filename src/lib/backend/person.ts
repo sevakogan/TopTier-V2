@@ -18,6 +18,73 @@ export interface PersonRecord {
   /** car photos / partner media URLs to render as a gallery. */
   media: string[];
   notes: string | null;
+  /** Internal-only open tracking (admin_person_meta). */
+  openCount: number;
+  lastOpenedAt: string | null;
+}
+
+interface PersonMeta {
+  note: string | null;
+  open_count: number;
+  last_opened_at: string | null;
+}
+
+/** Admin-only metadata, decoupled from V1 domain tables. Best-effort:
+ *  returns null if the migration hasn't run yet. */
+async function getPersonMeta(
+  type: PersonType,
+  recordId: string
+): Promise<PersonMeta | null> {
+  try {
+    const db = createServiceClient();
+    const { data, error } = await db
+      .from("admin_person_meta")
+      .select("note, open_count, last_opened_at")
+      .eq("person_type", type)
+      .eq("record_id", recordId)
+      .maybeSingle();
+    if (error) return null;
+    return (data as PersonMeta | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Count a real drawer open (not prefetch/hover/revalidate). */
+export async function trackPersonOpen(
+  type: PersonType,
+  recordId: string
+): Promise<boolean> {
+  try {
+    const db = createServiceClient();
+    const now = new Date().toISOString();
+    const { data } = await db
+      .from("admin_person_meta")
+      .select("id, open_count")
+      .eq("person_type", type)
+      .eq("record_id", recordId)
+      .maybeSingle();
+    if (data) {
+      const { error } = await db
+        .from("admin_person_meta")
+        .update({
+          open_count: ((data.open_count as number) ?? 0) + 1,
+          last_opened_at: now,
+          updated_at: now,
+        })
+        .eq("id", data.id as string);
+      return !error;
+    }
+    const { error } = await db.from("admin_person_meta").insert({
+      person_type: type,
+      record_id: recordId,
+      open_count: 1,
+      last_opened_at: now,
+    });
+    return !error;
+  } catch {
+    return false;
+  }
 }
 
 function v(x: unknown): string {
@@ -38,10 +105,28 @@ function fmt(d: unknown): string {
       });
 }
 
+type BaseRecord = Omit<PersonRecord, "openCount" | "lastOpenedAt">;
+
+/** Public: V1 record + admin-only meta (note override + open stats). */
 export async function getPersonRecord(
   type: PersonType,
   recordId: string
 ): Promise<PersonRecord | null> {
+  const base = await buildPersonRecord(type, recordId);
+  if (!base) return null;
+  const meta = await getPersonMeta(type, recordId);
+  return {
+    ...base,
+    notes: meta?.note ?? base.notes,
+    openCount: meta?.open_count ?? 0,
+    lastOpenedAt: meta?.last_opened_at ?? null,
+  };
+}
+
+async function buildPersonRecord(
+  type: PersonType,
+  recordId: string
+): Promise<BaseRecord | null> {
   const db = createServiceClient();
 
   if (type === "applicant") {
@@ -403,19 +488,56 @@ export async function moveStage(input: {
   return { ok: false, message: "Partners are not moved via the pipeline." };
 }
 
+/** Internal note for ANY person type — canonical store is
+ *  admin_person_meta; member/partner are mirrored to V1.internal_notes
+ *  for back-compat. Returns false only if the meta table isn't there
+ *  yet AND the type has no V1 column to fall back to. */
 export async function saveNotes(
   type: PersonType,
   recordId: string,
   notes: string
 ): Promise<boolean> {
   const db = createServiceClient();
-  const table =
-    type === "partner" ? "trusted_partners" : "member_profiles";
-  // Only member/partner rows have an internal_notes column in V1.
-  if (type === "applicant" || type === "garage") return false;
-  const { error } = await db
-    .from(table)
-    .update({ internal_notes: notes })
-    .eq("id", recordId);
-  return !error;
+  const now = new Date().toISOString();
+
+  // Best-effort mirror to V1 (member/partner only have the column).
+  if (type === "member" || type === "garage") {
+    await db
+      .from("member_profiles")
+      .update({ internal_notes: notes })
+      .eq("id", recordId);
+  } else if (type === "partner") {
+    await db
+      .from("trusted_partners")
+      .update({ internal_notes: notes })
+      .eq("id", recordId);
+  }
+
+  // Canonical: admin_person_meta (covers applicant/garage too).
+  try {
+    const { data } = await db
+      .from("admin_person_meta")
+      .select("id")
+      .eq("person_type", type)
+      .eq("record_id", recordId)
+      .maybeSingle();
+    if (data) {
+      const { error } = await db
+        .from("admin_person_meta")
+        .update({ note: notes, updated_at: now })
+        .eq("id", data.id as string);
+      return !error;
+    }
+    const { error } = await db.from("admin_person_meta").insert({
+      person_type: type,
+      record_id: recordId,
+      note: notes,
+    });
+    if (!error) return true;
+  } catch {
+    // table missing — fall through
+  }
+
+  // Meta table absent: member/partner still persisted via V1 mirror.
+  return type === "member" || type === "garage" || type === "partner";
 }

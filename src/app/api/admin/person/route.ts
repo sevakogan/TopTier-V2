@@ -2,7 +2,12 @@
 // Admin-guarded (shared requireAdmin), service-role.
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/backend/admin-auth";
-import { getPersonRecord, moveStage, saveNotes } from "@/lib/backend/person";
+import {
+  getPersonRecord,
+  moveStage,
+  saveNotes,
+  trackPersonOpen,
+} from "@/lib/backend/person";
 import type { PersonType } from "@/lib/backend/pipeline";
 
 export async function GET(req: NextRequest) {
@@ -23,8 +28,14 @@ export async function POST(req: NextRequest) {
   if (!admin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
-    const { type, recordId, to } = await req.json();
-    if (!type || !recordId || !to)
+    const { type, recordId, to, action } = await req.json();
+    if (!type || !recordId)
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+    if (action === "open") {
+      await trackPersonOpen(type, recordId);
+      return NextResponse.json({ success: true });
+    }
+    if (!to)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     const r = await moveStage({
       type,

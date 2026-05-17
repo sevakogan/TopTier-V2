@@ -86,7 +86,6 @@ export function PersonDrawer({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
-  const [notesEditable, setNotesEditable] = useState(true);
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(false);
@@ -108,10 +107,9 @@ export function PersonDrawer({
   }
 
   const applyRecord = useCallback(
-    (rec: PersonRecord | null, type: PersonType) => {
+    (rec: PersonRecord | null) => {
       setRecord(rec);
       setNotes(rec?.notes ?? "");
-      setNotesEditable(type === "member" || type === "partner");
     },
     []
   );
@@ -122,7 +120,7 @@ export function PersonDrawer({
       setError(null);
       setBanner(null);
       const rec = await loadPerson(target.type, target.recordId, force);
-      if (rec) applyRecord(rec, target.type);
+      if (rec) applyRecord(rec);
       else setError("Could not load this record.");
       setLoading(false);
     },
@@ -134,7 +132,7 @@ export function PersonDrawer({
     // Instant: paint cached record immediately, no skeleton.
     const cached = getPerson(target.type, target.recordId);
     if (cached) {
-      applyRecord(cached, target.type);
+      applyRecord(cached);
       setLoading(false);
       void loadRecord(true); // silent background refresh
     } else {
@@ -142,6 +140,24 @@ export function PersonDrawer({
       setLoading(true);
       void loadRecord(false);
     }
+    // Count this as a real open (one per drawer-open — NOT prefetch /
+    // hover / background revalidate, which never change `target`).
+    void (async () => {
+      const t = await authToken();
+      if (!t) return;
+      void fetch("/api/admin/person", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${t}`,
+        },
+        body: JSON.stringify({
+          type: target.type,
+          recordId: target.recordId,
+          action: "open",
+        }),
+      });
+    })();
   }, [target, getPerson, applyRecord, loadRecord]);
 
   useEffect(() => {
@@ -225,7 +241,9 @@ export function PersonDrawer({
         // Keep the cache fresh so reopening shows the saved notes.
         void loadPerson(target.type, target.recordId, true);
       } else if (res.status === 422) {
-        setNotesEditable(false);
+        setBanner(
+          "Notes for leads/garage need the one-line internal-meta migration — run it in Supabase, then this saves."
+        );
       } else {
         setBanner("Could not save notes.");
       }
@@ -515,41 +533,50 @@ export function PersonDrawer({
                   </div>
                 )}
 
-                {/* Admin notes */}
+                {/* Internal — staff only (note + open tracking) */}
                 <div className="border-t border-[rgba(255,255,255,0.07)] py-4">
-                  <h4 className="text-[10px] tracking-[2px] uppercase text-[#C9A84C] mb-2.5">
-                    Admin notes
-                  </h4>
-                  {notesEditable ? (
-                    <>
-                      <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        rows={4}
-                        placeholder="Private — staff only."
-                        className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)] resize-y"
-                      />
-                      <div className="mt-2 flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={saveNotes}
-                          disabled={busy}
-                          className="rounded-lg bg-[#C9A84C] px-3.5 py-2 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965] transition-colors disabled:opacity-40"
-                        >
-                          Save notes
-                        </button>
-                        {savedTick && (
-                          <span className="text-[12px] text-[#22c55e]">
-                            Saved
-                          </span>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="rounded-lg border border-dashed border-[rgba(255,255,255,0.07)] px-3.5 py-3 text-[12px] text-[rgba(245,245,240,0.45)]">
-                      Notes available once they’re a member / partner.
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-[10px] tracking-[2px] uppercase text-[#C9A84C]">
+                      Internal · staff only
+                    </h4>
+                    {record && record.openCount > 0 && (
+                      <span className="text-[10px] text-[rgba(245,245,240,0.45)]">
+                        Opened {record.openCount}×
+                        {record.lastOpenedAt
+                          ? ` · last ${new Date(
+                              record.lastOpenedAt
+                            ).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })}`
+                          : ""}
+                      </span>
+                    )}
+                  </div>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    rows={4}
+                    placeholder="Private internal note — staff only."
+                    className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)] resize-y"
+                  />
+                  <div className="mt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={saveNotes}
+                      disabled={busy}
+                      className="rounded-lg bg-[#C9A84C] px-3.5 py-2 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965] transition-colors disabled:opacity-40"
+                    >
+                      Save note
+                    </button>
+                    {savedTick && (
+                      <span className="text-[12px] text-[#22c55e]">
+                        Saved
+                      </span>
+                    )}
+                  </div>
                 </div>
               </>
             ) : (
