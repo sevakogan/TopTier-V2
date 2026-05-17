@@ -20,6 +20,12 @@ const MANAGEMENT_LINKS = [
     icon: "🎟️",
     showBadge: false,
   },
+  {
+    href: "/admin/payments",
+    label: "Payments",
+    icon: "💳",
+    showBadge: false,
+  },
 ];
 
 export function AdminSidebar() {

@@ -41,7 +41,8 @@ export function useAdminResource<T>(path: string, key: string) {
         return;
       }
       const payload = await res.json();
-      setData(payload[key] ?? null);
+      // key === "" → consume the whole payload (multi-field endpoints).
+      setData(key ? (payload[key] ?? null) : payload);
     } catch {
       setError("Could not load this data.");
     } finally {
