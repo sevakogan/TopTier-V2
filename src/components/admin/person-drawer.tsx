@@ -5,6 +5,9 @@ import { supabase } from "@/lib/supabase";
 import type { PersonRecord } from "@/lib/backend/person";
 import type { PersonType, PipelineStage } from "@/lib/backend/pipeline";
 import { useAdminPipeline } from "@/components/admin/admin-data";
+import { useAdminResource } from "@/lib/admin/use-admin-api";
+
+type Plan = { id: string; name: string; price_cents: number };
 
 type DrawerLayout = "side" | "popup";
 const LAYOUT_KEY = "ttmc.drawerLayout";
@@ -74,6 +77,10 @@ export function PersonDrawer({
   onChanged: () => void;
 }) {
   const { getPerson, loadPerson } = useAdminPipeline();
+  const { data: plans } = useAdminResource<Plan[]>(
+    "/api/admin/plans",
+    "plans"
+  );
   const open = target !== null;
   const [record, setRecord] = useState<PersonRecord | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,6 +91,7 @@ export function PersonDrawer({
   const [banner, setBanner] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(false);
   const [layout, setLayout] = useState<DrawerLayout>("side");
+  const [planId, setPlanId] = useState("");
 
   useEffect(() => {
     setLayout(readLayout());
@@ -228,6 +236,50 @@ export function PersonDrawer({
     }
   }
 
+  // Lead → Payment Requested: approve + email the signup/payment link.
+  async function requestPayment() {
+    if (!target || !planId) return;
+    setBusy(true);
+    setBanner(null);
+    try {
+      const token = await authToken();
+      if (!token) {
+        setBanner("Session expired. Please sign in again.");
+        setBusy(false);
+        return;
+      }
+      const res = await fetch("/api/admin/invites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: "send",
+          inviteRequestId: target.recordId,
+          membershipPlanId: planId,
+        }),
+      });
+      if (res.ok) {
+        setPlanId("");
+        onChanged();
+        await loadRecord(true);
+      } else {
+        let msg = "Could not send the payment link.";
+        try {
+          const b = (await res.json()) as { error?: string };
+          if (b.error) msg = b.error;
+        } catch {
+          // keep default
+        }
+        setBanner(msg);
+      }
+    } catch {
+      setBanner("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <>
@@ -245,7 +297,7 @@ export function PersonDrawer({
       <aside
         className={
           layout === "popup"
-            ? `fixed left-1/2 top-1/2 z-50 w-[660px] max-w-[94vw] max-h-[88vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#0d0d0d] border border-[rgba(255,255,255,0.07)] overflow-y-auto shadow-2xl transition-all duration-200 ${
+            ? `fixed left-1/2 top-1/2 z-50 w-[1040px] max-w-[96vw] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#0d0d0d] border border-[rgba(255,255,255,0.07)] overflow-y-auto shadow-2xl transition-all duration-200 ${
                 open
                   ? "opacity-100 scale-100"
                   : "opacity-0 scale-95 pointer-events-none"
@@ -297,18 +349,21 @@ export function PersonDrawer({
             {/* Action buttons */}
             {target.type === "applicant" && (
               <>
+                <div className="mb-2 text-[10px] tracking-[2px] uppercase text-[#C9A84C]">
+                  Lead status
+                </div>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <ActionButton
-                    label="Mark In Review (claim)"
-                    variant="go"
-                    disabled={busy || loading}
-                    onClick={() => move("InReview")}
-                  />
-                  <ActionButton
-                    label="Back to New"
+                    label="New"
                     variant="default"
                     disabled={busy || loading}
                     onClick={() => move("New")}
+                  />
+                  <ActionButton
+                    label="In Review"
+                    variant="go"
+                    disabled={busy || loading}
+                    onClick={() => move("InReview")}
                   />
                   <ActionButton
                     label="Decline"
@@ -317,10 +372,34 @@ export function PersonDrawer({
                     onClick={() => move("Declined")}
                   />
                 </div>
-                <div className="mb-2 rounded-lg border border-dashed border-[rgba(201,168,76,0.3)] px-3.5 py-3 text-[12px] leading-relaxed text-[rgba(245,245,240,0.45)]">
-                  To request payment: drag the card to{" "}
-                  <b>Payment Requested</b> (or use the Invitations page) —
-                  that approves them and emails the payment link.
+                <div className="mb-4 rounded-lg border border-[rgba(201,168,76,0.3)] px-3.5 py-3">
+                  <div className="text-[12px] text-[rgba(245,245,240,0.7)] mb-2">
+                    Move to <b>Payment Requested</b> — approves them and
+                    emails the signup + payment link.
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      value={planId}
+                      onChange={(e) => setPlanId(e.target.value)}
+                      className="flex-1 min-w-[150px] rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2 text-[12px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]"
+                    >
+                      <option value="">Select a plan…</option>
+                      {(plans ?? []).map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — $
+                          {(p.price_cents / 100).toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={requestPayment}
+                      disabled={busy || loading || !planId}
+                      className="rounded-lg bg-[#C9A84C] px-3.5 py-2 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965] disabled:opacity-40"
+                    >
+                      Approve &amp; send link
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -379,6 +458,13 @@ export function PersonDrawer({
               </div>
             ) : record ? (
               <>
+                <div
+                  className={
+                    layout === "popup"
+                      ? "grid grid-cols-2 gap-x-10"
+                      : ""
+                  }
+                >
                 {record.sections.map((section) => (
                   <div
                     key={section.title}
@@ -408,6 +494,7 @@ export function PersonDrawer({
                     )}
                   </div>
                 ))}
+                </div>
 
                 {record.media.length > 0 && (
                   <div className="border-t border-[rgba(255,255,255,0.07)] py-4">
