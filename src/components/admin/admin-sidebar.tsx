@@ -21,6 +21,12 @@ const MANAGEMENT_LINKS = [
     showBadge: false,
   },
   {
+    href: "/admin/studio",
+    label: "Studio",
+    icon: "🎬",
+    showBadge: false,
+  },
+  {
     href: "/admin/invite-codes",
     label: "Invite Codes",
     icon: "🎟️",
