@@ -177,6 +177,10 @@ export async function saveEvent(
     row.is_featured = Boolean(input.is_featured);
   if (Array.isArray(input.allowed_tiers))
     row.allowed_tiers = input.allowed_tiers;
+  if (Array.isArray(input.images))
+    row.images = (input.images as unknown[])
+      .map((x) => String(x).trim())
+      .filter(Boolean);
 
   if (id) {
     const { error } = await db

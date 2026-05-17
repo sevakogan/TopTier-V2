@@ -16,6 +16,7 @@ const EMPTY = {
   category: "",
   max_capacity: "",
   allowed_tiers: [] as string[],
+  images: "",
   is_active: true,
   is_featured: false,
   rsvp_enabled: true,
@@ -55,6 +56,7 @@ export default function EventsPage() {
   const [preview, setPreview] = useState<EventRow | null>(null);
   const [confirmDel, setConfirmDel] = useState<EventRow | null>(null);
   const [delText, setDelText] = useState("");
+  const [shareCopied, setShareCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
@@ -79,6 +81,7 @@ export default function EventsPage() {
         max_capacity:
           e.max_capacity != null ? String(e.max_capacity) : "",
         allowed_tiers: e.allowed_tiers ?? [],
+        images: (e.images ?? []).join("\n"),
         is_active: e.is_active,
         is_featured: e.is_featured,
         rsvp_enabled: e.rsvp_enabled,
@@ -100,6 +103,10 @@ export default function EventsPage() {
         ? new Date(f.event_end_date).toISOString()
         : null,
       max_capacity: f.max_capacity ? Number(f.max_capacity) : null,
+      images: f.images
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
     };
     const r = edit.id
       ? await adminMutate("/api/admin/events", "PATCH", {
@@ -172,16 +179,28 @@ export default function EventsPage() {
               className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#111111] p-4"
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-[14px] font-semibold text-[#F5F5F0]">
-                    {e.title}{" "}
-                    {e.is_featured && (
-                      <span className="text-[#C9A84C]">★</span>
-                    )}
-                  </div>
-                  <div className="text-[12px] text-[rgba(245,245,240,0.45)] mt-0.5">
-                    {fmt(e.event_date)}
-                    {e.location_city ? ` · ${e.location_city}` : ""}
+                <div className="flex items-start gap-3 min-w-0">
+                  {e.images && e.images.length > 0 ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={e.images[0]}
+                      alt={e.title}
+                      className="h-14 w-14 flex-none rounded-lg object-cover border border-[rgba(255,255,255,0.07)]"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 flex-none rounded-lg bg-[linear-gradient(135deg,#1f1f1f,#0d0d0d)] border border-[rgba(255,255,255,0.07)]" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-[#F5F5F0]">
+                      {e.title}{" "}
+                      {e.is_featured && (
+                        <span className="text-[#C9A84C]">★</span>
+                      )}
+                    </div>
+                    <div className="text-[12px] text-[rgba(245,245,240,0.45)] mt-0.5">
+                      {fmt(e.event_date)}
+                      {e.location_city ? ` · ${e.location_city}` : ""}
+                    </div>
                   </div>
                 </div>
                 <span
@@ -226,10 +245,13 @@ export default function EventsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPreview(e)}
+                  onClick={() => {
+                    setShareCopied(false);
+                    setPreview(e);
+                  }}
                   className="text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
                 >
-                  Preview
+                  View
                 </button>
                 <button
                   type="button"
@@ -441,6 +463,31 @@ export default function EventsPage() {
                   ))}
                 </div>
               </div>
+              <div>
+                <label className={label}>
+                  Images — one URL per line (first = cover)
+                </label>
+                <textarea
+                  value={edit.form.images}
+                  onChange={(ev) =>
+                    setEdit({
+                      ...edit,
+                      form: { ...edit.form, images: ev.target.value },
+                    })
+                  }
+                  rows={3}
+                  placeholder="https://…/photo1.jpg"
+                  className={`${field} resize-y`}
+                />
+                {edit.form.images.trim() && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={edit.form.images.split("\n")[0].trim()}
+                    alt="cover preview"
+                    className="mt-2 h-28 w-full rounded-lg object-cover border border-[rgba(255,255,255,0.07)]"
+                  />
+                )}
+              </div>
               <div className="flex flex-wrap gap-5">
                 {(
                   [
@@ -501,7 +548,7 @@ export default function EventsPage() {
         />
       )}
 
-      {/* Preview — read-only, how the event reads at a glance */}
+      {/* View — public-facing look + shareable link */}
       {preview && (
         <>
           <div
@@ -584,6 +631,26 @@ export default function EventsPage() {
                 {preview.description || "No description yet."}
               </p>
               <div className="mt-6 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = `${
+                      typeof window !== "undefined"
+                        ? window.location.origin
+                        : ""
+                    }/events`;
+                    navigator.clipboard
+                      .writeText(url)
+                      .then(() => {
+                        setShareCopied(true);
+                        setTimeout(() => setShareCopied(false), 1800);
+                      })
+                      .catch(() => setShareCopied(false));
+                  }}
+                  className="mr-auto rounded-lg border border-[rgba(201,168,76,0.4)] px-4 py-2.5 text-[12px] font-semibold text-[#C9A84C] hover:bg-[rgba(201,168,76,0.1)]"
+                >
+                  {shareCopied ? "Share link copied ✓" : "Copy share link"}
+                </button>
                 <button
                   type="button"
                   onClick={() => {
