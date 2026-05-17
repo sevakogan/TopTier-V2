@@ -33,6 +33,12 @@ const MANAGEMENT_LINKS = [
     showBadge: false,
   },
   {
+    href: "/admin/bookings",
+    label: "Bookings",
+    icon: "📕",
+    showBadge: false,
+  },
+  {
     href: "/admin/invite-codes",
     label: "Invite Codes",
     icon: "🎟️",
