@@ -91,10 +91,10 @@ export function Nav() {
           })}
 
           <Link
-            href="/apply"
+            href="/join"
             className="btn-fill-gold cursor-none rounded-full px-4 py-1.5 text-[10px] font-semibold tracking-[2px] sm:px-5 sm:text-[13px] sm:tracking-[3px]"
           >
-            APPLY
+            GARAGE PASS
           </Link>
         </div>
       </nav>

@@ -119,14 +119,14 @@ export default function Home() {
 
           {/* Buttons */}
           <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
-            <Link href="/apply">
+            <Link href="/join">
               <ShimmerButton
                 shimmerColor="#C9A84C"
                 background="rgba(201,168,76,0.12)"
                 borderRadius="8px"
                 className="px-12 py-5 text-[13px] font-semibold tracking-[4px]"
               >
-                APPLY FOR MEMBERSHIP &rarr;
+                GET YOUR GARAGE PASS &rarr;
               </ShimmerButton>
             </Link>
             <Link
@@ -226,10 +226,10 @@ export default function Home() {
       {/* ── Mid-page CTA ── */}
       <div className="flex justify-center py-12">
         <Link
-          href="/apply"
+          href="/join"
           className="btn-fill-gold rounded-lg px-12 py-4 text-[16px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
         >
-          APPLY FOR MEMBERSHIP &rarr;
+          GET YOUR GARAGE PASS &rarr;
         </Link>
       </div>
 
@@ -309,22 +309,22 @@ export default function Home() {
             {/* Top gold line */}
             <div className="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent" />
 
-            <p className="font-cormorant text-[clamp(48px,8vw,96px)] font-bold text-[#C9A84C]">
-              48
+            <p className="font-cormorant text-[clamp(40px,6vw,72px)] font-bold leading-tight text-[#F5F5F0]">
+              Free to <span className="text-[#C9A84C]">look.</span>
             </p>
-            <p className="font-cormorant text-[clamp(20px,3vw,32px)] text-[#F5F5F0]">
-              hours.
+            <p className="font-cormorant text-[clamp(40px,6vw,72px)] font-bold leading-tight text-[#F5F5F0]">
+              Earned to <span className="text-[#C9A84C]">belong.</span>
             </p>
-            <p className="mt-4 mb-10 max-w-sm text-center text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
-              That&apos;s how long it takes us to review your application. If
-              you&apos;re a fit, you&apos;ll hear from us.
+            <p className="mt-6 mb-10 max-w-sm text-center text-[14px] leading-relaxed text-[rgba(245,245,240,0.4)]">
+              Your Garage Pass is free. Step inside, see what the network moves
+              like, and apply for membership when you&apos;re ready.
             </p>
             <ConvoyTrail />
             <Link
-              href="/apply"
+              href="/join"
               className="btn-fill-gold rounded-lg px-12 py-4 text-[16px] font-semibold uppercase tracking-[4px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5"
             >
-              APPLY NOW
+              GET YOUR GARAGE PASS
             </Link>
           </div>
         </SectionReveal>
