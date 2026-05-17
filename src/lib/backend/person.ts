@@ -488,6 +488,57 @@ export async function moveStage(input: {
   return { ok: false, message: "Partners are not moved via the pipeline." };
 }
 
+/** Member ops keyed by member_profiles.id: lifecycle status changes +
+ *  password recovery. (Tier changes go through moveStage.) */
+export async function memberAction(
+  recordId: string,
+  op: "reactivate" | "suspend" | "terminate" | "reset_password"
+): Promise<{ ok: boolean; message?: string }> {
+  const db = createServiceClient();
+  const now = new Date().toISOString();
+
+  if (op === "reset_password") {
+    const { data: mp } = await db
+      .from("member_profiles")
+      .select("user_id")
+      .eq("id", recordId)
+      .maybeSingle();
+    const uid = mp?.user_id as string | undefined;
+    if (!uid) return { ok: false, message: "No linked account." };
+    const { data: prof } = await db
+      .from("profiles")
+      .select("email")
+      .eq("id", uid)
+      .maybeSingle();
+    const email = prof?.email as string | undefined;
+    if (!email)
+      return { ok: false, message: "No email on file for this member." };
+    try {
+      const { error } = await db.auth.admin.generateLink({
+        type: "recovery",
+        email,
+      });
+      return error
+        ? { ok: false, message: error.message }
+        : { ok: true, message: `Password reset sent to ${email}.` };
+    } catch {
+      return { ok: false, message: "Could not send the reset email." };
+    }
+  }
+
+  const statusMap = {
+    reactivate: "ACTIVE",
+    suspend: "SUSPENDED",
+    terminate: "TERMINATED",
+  } as const;
+  const status = statusMap[op];
+  const { error } = await db
+    .from("member_profiles")
+    .update({ status, membership_status: status, updated_at: now })
+    .eq("id", recordId);
+  return error ? { ok: false, message: error.message } : { ok: true };
+}
+
 /** Internal note for ANY person type — canonical store is
  *  admin_person_meta; member/partner are mirrored to V1.internal_notes
  *  for back-compat. Returns false only if the meta table isn't there

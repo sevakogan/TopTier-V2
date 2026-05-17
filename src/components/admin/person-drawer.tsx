@@ -214,6 +214,49 @@ export function PersonDrawer({
     }
   }
 
+  async function memberOp(
+    op: "reactivate" | "suspend" | "terminate" | "reset_password"
+  ) {
+    if (!target) return;
+    setBusy(true);
+    setBanner(null);
+    try {
+      const token = await authToken();
+      if (!token) {
+        setBanner("Session expired. Please sign in again.");
+        setBusy(false);
+        return;
+      }
+      const res = await fetch("/api/admin/person", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          type: target.type,
+          recordId: target.recordId,
+          action: "member-op",
+          op,
+        }),
+      });
+      const body = (await res
+        .json()
+        .catch(() => ({}))) as { error?: string; message?: string };
+      if (res.ok) {
+        if (body.message) setBanner(body.message);
+        onChanged();
+        await loadRecord(true);
+      } else {
+        setBanner(body.error ?? "That action failed.");
+      }
+    } catch {
+      setBanner("Something went wrong. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function saveNotes() {
     if (!target) return;
     setBusy(true);
@@ -445,10 +488,38 @@ export function PersonDrawer({
                   onClick={() => move("Strategic")}
                 />
                 <ActionButton
-                  label="Decline / Suspend"
+                  label="Decline"
                   variant="no"
                   disabled={busy || loading}
                   onClick={() => move("Declined")}
+                />
+              </div>
+            )}
+            {(target.type === "member" || target.type === "garage") && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                <ActionButton
+                  label="Reactivate"
+                  variant="go"
+                  disabled={busy || loading}
+                  onClick={() => memberOp("reactivate")}
+                />
+                <ActionButton
+                  label="Suspend"
+                  variant="default"
+                  disabled={busy || loading}
+                  onClick={() => memberOp("suspend")}
+                />
+                <ActionButton
+                  label="Terminate"
+                  variant="no"
+                  disabled={busy || loading}
+                  onClick={() => memberOp("terminate")}
+                />
+                <ActionButton
+                  label="Send password reset"
+                  variant="default"
+                  disabled={busy || loading}
+                  onClick={() => memberOp("reset_password")}
                 />
               </div>
             )}

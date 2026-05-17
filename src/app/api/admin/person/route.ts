@@ -7,6 +7,7 @@ import {
   moveStage,
   saveNotes,
   trackPersonOpen,
+  memberAction,
 } from "@/lib/backend/person";
 import type { PersonType } from "@/lib/backend/pipeline";
 
@@ -28,12 +29,28 @@ export async function POST(req: NextRequest) {
   if (!admin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
-    const { type, recordId, to, action } = await req.json();
+    const { type, recordId, to, action, op } = await req.json();
     if (!type || !recordId)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     if (action === "open") {
       await trackPersonOpen(type, recordId);
       return NextResponse.json({ success: true });
+    }
+    if (action === "member-op") {
+      if (
+        op !== "reactivate" &&
+        op !== "suspend" &&
+        op !== "terminate" &&
+        op !== "reset_password"
+      )
+        return NextResponse.json(
+          { error: "Unknown member op" },
+          { status: 400 }
+        );
+      const r = await memberAction(recordId, op);
+      return r.ok
+        ? NextResponse.json({ success: true, message: r.message })
+        : NextResponse.json({ error: r.message }, { status: 422 });
     }
     if (!to)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });

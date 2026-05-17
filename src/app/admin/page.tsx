@@ -190,6 +190,42 @@ export default function PipelinePage() {
     moveItem(item, stage);
   }
 
+  function exportCsv() {
+    const rows = items.filter((i) => i.group === "client");
+    const esc = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
+    const header = [
+      "Name",
+      "Email",
+      "Phone",
+      "Stage",
+      "Detail",
+      "Since",
+    ];
+    const lines = rows.map((r) =>
+      [
+        r.name,
+        r.email,
+        r.phone,
+        r.stage,
+        r.subtitle,
+        r.createdAt ?? "",
+      ]
+        .map((x) => esc(String(x)))
+        .join(",")
+    );
+    const csv = [header.join(","), ...lines].join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" })
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ttmc-clients-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const columns = COLUMNS[group];
   const groupItems = useMemo(
     () =>
@@ -326,6 +362,14 @@ export default function PipelinePage() {
                 </button>
               ))}
             </div>
+            <span className="hidden sm:block h-6 w-px bg-[rgba(255,255,255,0.1)]" />
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="rounded-full border border-[rgba(255,255,255,0.07)] px-3 py-1.5 text-[11px] font-semibold tracking-[0.5px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+            >
+              Export CSV
+            </button>
           </>
         )}
       </div>
