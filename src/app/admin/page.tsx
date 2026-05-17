@@ -242,38 +242,42 @@ export default function PipelinePage() {
         member they cross over to Clients on their own.
       </p>
 
-      {/* Group toggle */}
-      <div className="mb-4 inline-flex rounded-lg border border-[rgba(255,255,255,0.07)] overflow-hidden">
-        {(
-          [
-            ["lead", "Leads"],
-            ["client", "Clients"],
-          ] as [PipelineGroup, string][]
-        ).map(([g, lbl]) => (
-          <button
-            key={g}
-            type="button"
-            onClick={() => setGroup(g)}
-            className={`px-5 py-2.5 text-[12px] font-semibold transition-colors ${
-              group === g
-                ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C]"
-                : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            }`}
-          >
-            {lbl}
-          </button>
-        ))}
-      </div>
+      {/* One inline toolbar: who (Leads/Clients) · how (Board/Table) ·
+          which (type filter), grouped with dividers + breathing room. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3 mb-5">
+        {/* Primary axis — Leads / Clients (pill) */}
+        <div className="inline-flex rounded-full border border-[rgba(255,255,255,0.1)] p-0.5">
+          {(
+            [
+              ["lead", "Leads"],
+              ["client", "Clients"],
+            ] as [PipelineGroup, string][]
+          ).map(([g, lbl]) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGroup(g)}
+              className={`rounded-full px-5 py-2 text-[12px] font-semibold transition-colors ${
+                group === g
+                  ? "bg-[#C9A84C] text-[#0A0A0A]"
+                  : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              }`}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-3.5 mb-5">
+        <span className="hidden sm:block h-6 w-px bg-[rgba(255,255,255,0.1)]" />
+
+        {/* View — Board / Table (segmented) */}
         <div className="inline-flex rounded-lg border border-[rgba(255,255,255,0.07)] overflow-hidden">
           {(["board", "table"] as ViewMode[]).map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
-              className={`px-4 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
+              className={`px-4 py-2 text-[12px] font-semibold capitalize transition-colors ${
                 view === v
                   ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C]"
                   : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
@@ -285,25 +289,25 @@ export default function PipelinePage() {
         </div>
 
         {group === "client" && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] tracking-[1px] uppercase text-[rgba(245,245,240,0.25)] mr-0.5">
-              Type
-            </span>
-            {CLIENT_TYPE_FILTERS.map((f) => (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setTypeFilter(f.key)}
-                className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.5px] transition-colors ${
-                  typeFilter === f.key
-                    ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C] border-[rgba(201,168,76,0.35)]"
-                    : "border-[rgba(255,255,255,0.07)] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <>
+            <span className="hidden sm:block h-6 w-px bg-[rgba(255,255,255,0.1)]" />
+            <div className="flex flex-wrap items-center gap-2">
+              {CLIENT_TYPE_FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setTypeFilter(f.key)}
+                  className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.5px] transition-colors ${
+                    typeFilter === f.key
+                      ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C] border-[rgba(201,168,76,0.35)]"
+                      : "border-[rgba(255,255,255,0.07)] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
