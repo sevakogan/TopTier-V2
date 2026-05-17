@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { EventRow, Attendee } from "@/lib/backend/events-admin";
 import { useAdminResource, adminMutate } from "@/lib/admin/use-admin-api";
+import { ImageLightbox } from "@/components/admin/image-lightbox";
 
 const TIERS = ["CORE", "EXECUTIVE", "EXECUTIVE_ELITE", "STRATEGIC"];
 
@@ -57,6 +58,7 @@ export default function EventsPage() {
   const [confirmDel, setConfirmDel] = useState<EventRow | null>(null);
   const [delText, setDelText] = useState("");
   const [shareCopied, setShareCopied] = useState(false);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
@@ -185,7 +187,8 @@ export default function EventsPage() {
                     <img
                       src={e.images[0]}
                       alt={e.title}
-                      className="h-14 w-14 flex-none rounded-lg object-cover border border-[rgba(255,255,255,0.07)]"
+                      onClick={() => setLightbox(e.images![0])}
+                      className="h-14 w-14 flex-none rounded-lg object-cover border border-[rgba(255,255,255,0.07)] cursor-zoom-in"
                     />
                   ) : (
                     <div className="h-14 w-14 flex-none rounded-lg bg-[linear-gradient(135deg,#1f1f1f,#0d0d0d)] border border-[rgba(255,255,255,0.07)]" />
@@ -484,7 +487,10 @@ export default function EventsPage() {
                   <img
                     src={edit.form.images.split("\n")[0].trim()}
                     alt="cover preview"
-                    className="mt-2 h-28 w-full rounded-lg object-cover border border-[rgba(255,255,255,0.07)]"
+                    onClick={() =>
+                      setLightbox(edit.form.images.split("\n")[0].trim())
+                    }
+                    className="mt-2 h-28 w-full rounded-lg object-cover border border-[rgba(255,255,255,0.07)] cursor-zoom-in"
                   />
                 )}
               </div>
@@ -561,7 +567,8 @@ export default function EventsPage() {
               <img
                 src={preview.images[0]}
                 alt={preview.title}
-                className="h-44 w-full rounded-t-2xl object-cover"
+                onClick={() => setLightbox(preview.images![0])}
+                className="h-44 w-full rounded-t-2xl object-cover cursor-zoom-in"
               />
             ) : (
               <div className="h-24 rounded-t-2xl bg-[linear-gradient(135deg,#1a1a1a,#0d0d0d)]" />
@@ -733,6 +740,11 @@ export default function EventsPage() {
           </div>
         </>
       )}
+
+      <ImageLightbox
+        src={lightbox}
+        onClose={() => setLightbox(null)}
+      />
     </div>
   );
 }

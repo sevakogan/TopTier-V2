@@ -6,6 +6,7 @@ import type { PersonRecord } from "@/lib/backend/person";
 import type { PersonType, PipelineStage } from "@/lib/backend/pipeline";
 import { useAdminPipeline } from "@/components/admin/admin-data";
 import { useAdminResource } from "@/lib/admin/use-admin-api";
+import { ImageLightbox } from "@/components/admin/image-lightbox";
 
 type Plan = { id: string; name: string; price_cents: number };
 
@@ -91,6 +92,7 @@ export function PersonDrawer({
   const [savedTick, setSavedTick] = useState(false);
   const [layout, setLayout] = useState<DrawerLayout>("side");
   const [planId, setPlanId] = useState("");
+  const [lightbox, setLightbox] = useState<string | null>(null);
 
   useEffect(() => {
     setLayout(readLayout());
@@ -526,7 +528,8 @@ export function PersonDrawer({
                           key={`${url}-${idx}`}
                           src={url}
                           alt="Uploaded media"
-                          className="h-24 w-full rounded-lg object-cover border border-[rgba(255,255,255,0.07)]"
+                          onClick={() => setLightbox(url)}
+                          className="h-24 w-full rounded-lg object-cover border border-[rgba(255,255,255,0.07)] cursor-zoom-in"
                         />
                       ))}
                     </div>
@@ -587,6 +590,10 @@ export function PersonDrawer({
           </div>
         )}
       </aside>
+      <ImageLightbox
+        src={lightbox}
+        onClose={() => setLightbox(null)}
+      />
     </>
   );
 }
