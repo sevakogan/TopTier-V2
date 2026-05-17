@@ -52,6 +52,9 @@ export default function EventsPage() {
     form: typeof EMPTY;
   } | null>(null);
   const [attFor, setAttFor] = useState<EventRow | null>(null);
+  const [preview, setPreview] = useState<EventRow | null>(null);
+  const [confirmDel, setConfirmDel] = useState<EventRow | null>(null);
+  const [delText, setDelText] = useState("");
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
 
@@ -112,9 +115,13 @@ export default function EventsPage() {
   }
 
   async function remove(e: EventRow) {
+    setBusy(true);
     const r = await adminMutate("/api/admin/events", "DELETE", {
       id: e.id,
     });
+    setBusy(false);
+    setConfirmDel(null);
+    setDelText("");
     if (!r.ok) setBanner(r.error ?? "Could not delete.");
     await refetch();
   }
@@ -219,6 +226,13 @@ export default function EventsPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => setPreview(e)}
+                  className="text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
                   onClick={() => openEdit(e)}
                   className="text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
                 >
@@ -226,7 +240,10 @@ export default function EventsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => remove(e)}
+                  onClick={() => {
+                    setDelText("");
+                    setConfirmDel(e);
+                  }}
                   className="text-[rgba(245,245,240,0.45)] hover:text-[#ef4444]"
                 >
                   Delete
@@ -482,6 +499,172 @@ export default function EventsPage() {
           onClose={() => setAttFor(null)}
           onChanged={refetch}
         />
+      )}
+
+      {/* Preview — read-only, how the event reads at a glance */}
+      {preview && (
+        <>
+          <div
+            onClick={() => setPreview(null)}
+            className="fixed inset-0 bg-black/60 z-40"
+          />
+          <div className="fixed left-1/2 top-1/2 z-50 w-[560px] max-w-[94vw] max-h-[88vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[#0d0d0d] shadow-2xl">
+            {preview.images && preview.images.length > 0 ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview.images[0]}
+                alt={preview.title}
+                className="h-44 w-full rounded-t-2xl object-cover"
+              />
+            ) : (
+              <div className="h-24 rounded-t-2xl bg-[linear-gradient(135deg,#1a1a1a,#0d0d0d)]" />
+            )}
+            <div className="p-7">
+              <button
+                type="button"
+                onClick={() => setPreview(null)}
+                className="float-right text-[20px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              >
+                ✕
+              </button>
+              <div className="text-[20px] font-bold text-[#F5F5F0]">
+                {preview.title}
+                {preview.is_featured && (
+                  <span className="text-[#C9A84C]"> ★</span>
+                )}
+              </div>
+              <div className="text-[13px] text-[rgba(245,245,240,0.45)] mt-1 mb-4">
+                {fmt(preview.event_date)}
+                {preview.location_city
+                  ? ` · ${preview.location_city}${
+                      preview.location_country
+                        ? `, ${preview.location_country}`
+                        : ""
+                    }`
+                  : ""}
+              </div>
+              <div className="flex flex-wrap gap-4 text-[12px] mb-4">
+                <span className="text-[rgba(245,245,240,0.7)]">
+                  <b className="text-[#F5F5F0]">
+                    {preview.confirmedCount}
+                  </b>
+                  {preview.max_capacity != null
+                    ? `/${preview.max_capacity}`
+                    : ""}{" "}
+                  going
+                </span>
+                <span className="text-[rgba(245,245,240,0.7)]">
+                  <b className="text-[#eab308]">
+                    {preview.waitlistCount}
+                  </b>{" "}
+                  waitlist
+                </span>
+                <span
+                  style={{
+                    color: preview.is_active ? "#22c55e" : "#9aa0a6",
+                  }}
+                >
+                  {preview.is_active ? "Live" : "Hidden"}
+                </span>
+              </div>
+              {preview.allowed_tiers &&
+                preview.allowed_tiers.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {preview.allowed_tiers.map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full bg-[rgba(201,168,76,0.14)] px-2 py-1 text-[10px] font-semibold text-[#C9A84C]"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              <p className="text-[13px] leading-relaxed text-[rgba(245,245,240,0.7)] whitespace-pre-wrap">
+                {preview.description || "No description yet."}
+              </p>
+              <div className="mt-6 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const e = preview;
+                    setPreview(null);
+                    openEdit(e);
+                  }}
+                  className="rounded-lg border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] font-semibold text-[rgba(245,245,240,0.7)] hover:text-[#F5F5F0]"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreview(null)}
+                  className="rounded-lg bg-[#C9A84C] px-5 py-2.5 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Delete — double confirmation (type DELETE; irreversible) */}
+      {confirmDel && (
+        <>
+          <div
+            onClick={() => {
+              setConfirmDel(null);
+              setDelText("");
+            }}
+            className="fixed inset-0 bg-black/60 z-40"
+          />
+          <div className="fixed left-1/2 top-1/2 z-50 w-[460px] max-w-[94vw] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[rgba(239,68,68,0.35)] bg-[#0d0d0d] p-7 shadow-2xl">
+            <h2 className="text-[18px] font-bold text-[#F5F5F0] mb-1">
+              Delete this event?
+            </h2>
+            <p className="text-[12px] leading-relaxed text-[rgba(245,245,240,0.6)] mb-1">
+              <b className="text-[#F5F5F0]">{confirmDel.title}</b>
+            </p>
+            <p className="text-[12px] leading-relaxed text-[#ef8c8c] mb-4">
+              This is <b>permanent and cannot be undone</b>. It also
+              removes{" "}
+              {confirmDel.confirmedCount + confirmDel.waitlistCount} RSVP
+              {confirmDel.confirmedCount + confirmDel.waitlistCount === 1
+                ? ""
+                : "s"}{" "}
+              and all check-ins.
+            </p>
+            <label className="block text-[11px] text-[rgba(245,245,240,0.45)] mb-1.5">
+              Type <b className="text-[#F5F5F0]">DELETE</b> to confirm
+            </label>
+            <input
+              value={delText}
+              onChange={(e) => setDelText(e.target.value)}
+              placeholder="DELETE"
+              className="w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(239,68,68,0.5)]"
+            />
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmDel(null);
+                  setDelText("");
+                }}
+                className="rounded-lg border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] font-semibold text-[rgba(245,245,240,0.7)] hover:text-[#F5F5F0]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy || delText.trim() !== "DELETE"}
+                onClick={() => remove(confirmDel)}
+                className="rounded-lg bg-[#ef4444] px-5 py-2.5 text-[12px] font-semibold text-white hover:bg-[#dc2626] disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                {busy ? "Deleting…" : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
