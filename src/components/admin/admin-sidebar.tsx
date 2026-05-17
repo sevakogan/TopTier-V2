@@ -21,6 +21,12 @@ const MANAGEMENT_LINKS = [
     showBadge: false,
   },
   {
+    href: "/admin/partners",
+    label: "Partners",
+    icon: "🤝",
+    showBadge: false,
+  },
+  {
     href: "/admin/payments",
     label: "Payments",
     icon: "💳",

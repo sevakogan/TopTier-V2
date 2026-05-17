@@ -1,413 +1,689 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
-import Link from "next/link";
-import { supabase } from "@/lib/supabase";
-import { listActivePartners } from "@/lib/backend/partners";
-import type { PartnerCard } from "@/lib/backend/types";
+import { useState } from "react";
+import type {
+  PartnerRow,
+  PartnerOffer,
+} from "@/lib/backend/partners-admin";
+import { useAdminResource, adminMutate } from "@/lib/admin/use-admin-api";
 
-type Perk = {
-  id: string;
-  business_name: string;
-  category: string;
-  discount: string;
-  is_active: boolean;
-};
-
-type TabKey = "all" | string;
-
-const CATEGORY_COLOR_POOL = [
-  "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]",
-  "bg-[rgba(168,85,247,0.15)] text-[#a855f7]",
-  "bg-[rgba(59,130,246,0.15)] text-[#3b82f6]",
-  "bg-[rgba(34,197,94,0.15)] text-[#22c55e]",
-  "bg-[rgba(234,179,8,0.15)] text-[#eab308]",
-];
-const DEFAULT_CATEGORY_COLOR =
-  "bg-[rgba(255,255,255,0.06)] text-[rgba(245,245,240,0.45)]";
-
-const CATEGORIES = ["automotive", "dining", "lifestyle"];
-
-const INITIAL_FORM = {
-  business_name: "",
-  category: "automotive",
-  discount: "",
+const EMPTY_PARTNER = {
+  name: "",
+  category: "",
   description: "",
+  contact_name: "",
+  contact_email: "",
+  contact_phone: "",
+  website: "",
+  logo_url: "",
+  hero_image_url: "",
+  benefit_details: "",
   discount_code: "",
-  website_url: "",
+  visibility_tier: "ALL",
+  package: "SUPPORTER",
+  paid_status: "pending",
+  pay_link: "",
+  internal_notes: "",
+  is_active: true,
+  is_featured: false,
+  featured_until: "",
+  display_order: 0,
 };
 
-function mapPartner(p: PartnerCard): Perk {
-  return {
-    id: p.id,
-    business_name: p.name,
-    category: p.category,
-    discount: p.discountCode ?? "—",
-    is_active: p.isActive,
-  };
-}
+const EMPTY_OFFER = {
+  title: "",
+  access_level: "ALL",
+  redemption_type: "code",
+  code_value: "",
+  redemption_instructions: "",
+  status: "ACTIVE",
+  expires_at: "",
+};
 
-function SkeletonRow() {
-  return (
-    <tr>
-      {[...Array(4)].map((_, i) => (
-        <td key={i} className="px-5 py-4 border-b border-[rgba(255,255,255,0.03)]">
-          <div className="h-4 w-24 bg-[rgba(255,255,255,0.04)] rounded animate-pulse" />
-        </td>
-      ))}
-    </tr>
-  );
-}
+const field =
+  "w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]";
+const label =
+  "block text-[10px] tracking-[1.5px] uppercase text-[rgba(245,245,240,0.45)] mb-1.5";
 
-function ActiveToggle({
-  active,
-  onToggle,
-}: {
-  active: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onToggle();
-      }}
-      className={`relative w-9 h-5 rounded-full transition-colors duration-200 ${
-        active ? "bg-[rgba(34,197,94,0.4)]" : "bg-[rgba(255,255,255,0.1)]"
-      }`}
-    >
-      <span
-        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
-          active ? "translate-x-[18px]" : "translate-x-0.5"
-        }`}
-      />
-    </button>
-  );
-}
+export default function PartnersPage() {
+  const { data, loading, error, refetch } = useAdminResource<
+    PartnerRow[]
+  >("/api/admin/partners", "partners");
+  const partners = data ?? [];
 
-export default function AdminPartnersPage() {
-  const [perks, setPerks] = useState<Perk[]>([]);
-  const [activeTab, setActiveTab] = useState<TabKey>("all");
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [submitting, setSubmitting] = useState(false);
+  const [edit, setEdit] = useState<{
+    id: string | null;
+    form: typeof EMPTY_PARTNER;
+  } | null>(null);
+  const [offersFor, setOffersFor] = useState<PartnerRow | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
 
-  const fetchPerks = useCallback(async () => {
-    try {
-      const partners = await listActivePartners();
-      setPerks(partners.map(mapPartner));
-    } catch {
-      // Silent fallback — degrade to empty list.
-      setPerks([]);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchPerks();
-  }, [fetchPerks]);
-
-  const tabs = useMemo<{ key: TabKey; label: string }[]>(() => {
-    const cats = Array.from(new Set(perks.map((p) => p.category))).sort();
-    return [
-      { key: "all", label: "All Partners" },
-      ...cats.map((c) => ({
-        key: c,
-        label: c.charAt(0).toUpperCase() + c.slice(1),
-      })),
-    ];
-  }, [perks]);
-
-  const categoryColor = useCallback(
-    (category: string) => {
-      const idx = Array.from(new Set(perks.map((p) => p.category)))
-        .sort()
-        .indexOf(category);
-      if (idx < 0) return DEFAULT_CATEGORY_COLOR;
-      return CATEGORY_COLOR_POOL[idx % CATEGORY_COLOR_POOL.length];
-    },
-    [perks]
-  );
-
-  useEffect(() => {
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") setShowModal(false);
-    }
-    if (showModal) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [showModal]);
-
-  const filtered =
-    activeTab === "all"
-      ? perks
-      : perks.filter((p) => p.category === activeTab);
-
-  async function handleToggleActive(id: string, currentActive: boolean) {
-    const newActive = !currentActive;
-    setPerks((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, is_active: newActive } : p))
-    );
-    try {
-      await supabase
-        .from("trusted_partners")
-        .update({ is_active: newActive })
-        .eq("id", id);
-    } catch {
-      // Revert optimistic update on failure.
-      setPerks((prev) =>
-        prev.map((p) =>
-          p.id === id ? { ...p, is_active: currentActive } : p
-        )
-      );
-    }
+  function openNew() {
+    setBanner(null);
+    setEdit({ id: null, form: { ...EMPTY_PARTNER } });
+  }
+  function openEdit(p: PartnerRow) {
+    setBanner(null);
+    setEdit({
+      id: p.id,
+      form: {
+        ...EMPTY_PARTNER,
+        ...Object.fromEntries(
+          Object.keys(EMPTY_PARTNER).map((k) => {
+            const v = (p as unknown as Record<string, unknown>)[k];
+            return [k, v ?? (typeof EMPTY_PARTNER[k as keyof typeof EMPTY_PARTNER] === "boolean" ? false : "")];
+          })
+        ),
+        featured_until: p.featured_until
+          ? p.featured_until.slice(0, 10)
+          : "",
+      } as typeof EMPTY_PARTNER,
+    });
   }
 
-  function updateField(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  async function savePartner() {
+    if (!edit) return;
+    setBusy(true);
+    setBanner(null);
+    const payload = {
+      ...edit.form,
+      featured_until: edit.form.featured_until
+        ? new Date(edit.form.featured_until).toISOString()
+        : null,
+      display_order: Number(edit.form.display_order) || 0,
+    };
+    const r = edit.id
+      ? await adminMutate("/api/admin/partners", "PATCH", {
+          id: edit.id,
+          ...payload,
+        })
+      : await adminMutate("/api/admin/partners", "POST", payload);
+    setBusy(false);
+    if (r.ok) {
+      setEdit(null);
+      await refetch();
+    } else setBanner(r.error ?? "Could not save.");
   }
 
-  // Create is intentionally a no-op against the V1 contract (no create
-  // endpoint exposed); the modal shell is preserved for behaviour parity.
-  function handleCreate() {
-    setForm(INITIAL_FORM);
-    setShowModal(false);
-    setSubmitting(false);
+  async function removePartner(p: PartnerRow) {
+    const r = await adminMutate("/api/admin/partners", "DELETE", {
+      id: p.id,
+    });
+    if (!r.ok) setBanner(r.error ?? "Could not delete.");
+    await refetch();
   }
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-7">
-        <div>
-          <h1 className="text-2xl font-bold text-[#F5F5F0]">Partners</h1>
-          <p className="text-[13px] text-[rgba(245,245,240,0.45)] mt-1">
-            Manage exclusive perks and partner discounts
-          </p>
-        </div>
+      <div className="flex items-start justify-between mb-1">
+        <h1 className="text-[22px] font-bold leading-tight text-[#F5F5F0]">
+          Partners
+        </h1>
         <button
-          onClick={() => setShowModal(true)}
-          className="bg-[#C9A84C] text-[#0A0A0A] rounded-lg px-4 py-2.5 text-[12px] font-semibold hover:bg-[#E8D48B] transition-colors"
+          type="button"
+          onClick={openNew}
+          className="rounded-lg bg-[#C9A84C] px-4 py-2.5 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965]"
         >
-          + Add Partner
+          + New Partner
         </button>
       </div>
+      <p className="text-[13px] text-[rgba(245,245,240,0.45)] mb-5">
+        Trusted partners, their benefits, billing status, and member
+        offers / discount codes.
+      </p>
 
-      {/* Tabs */}
-      <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-lg p-1 inline-flex gap-1 mb-5">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-md text-[12px] font-medium transition-all duration-150 ${
-              activeTab === tab.key
-                ? "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]"
-                : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-xl overflow-hidden">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-[rgba(255,255,255,0.06)]">
-              <th className="text-left px-5 py-3 text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] uppercase font-semibold">
-                Partner
-              </th>
-              <th className="text-left px-5 py-3 text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] uppercase font-semibold">
-                Category
-              </th>
-              <th className="text-left px-5 py-3 text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] uppercase font-semibold">
-                Discount
-              </th>
-              <th className="text-left px-5 py-3 text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] uppercase font-semibold">
-                Active
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-5 py-12 text-center text-[rgba(245,245,240,0.45)] text-sm"
-                >
-                  No partners in this category.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((perk) => (
-                <Link
-                  key={perk.id}
-                  href={`/admin/partners/${perk.id}`}
-                  className="contents"
-                >
-                  <tr className="cursor-pointer hover:bg-[rgba(201,168,76,0.03)]">
-                    <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)] font-semibold text-[#F5F5F0]">
-                      {perk.business_name}
-                    </td>
-                    <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)]">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-semibold tracking-[1px] ${categoryColor(
-                          perk.category
-                        )}`}
-                      >
-                        {perk.category.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)] text-[rgba(245,245,240,0.45)]">
-                      {perk.discount}
-                    </td>
-                    <td className="px-5 py-4 text-[13px] border-b border-[rgba(255,255,255,0.03)]">
-                      <ActiveToggle
-                        active={perk.is_active}
-                        onToggle={() =>
-                          handleToggleActive(perk.id, perk.is_active)
-                        }
-                      />
-                    </td>
-                  </tr>
-                </Link>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add Partner Modal */}
-      {showModal && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowModal(false);
-          }}
-        >
-          <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-2xl p-8 w-[480px] max-w-[90vw]">
-            <h2 className="text-lg font-bold text-[#F5F5F0] mb-6">
-              Add Partner
-            </h2>
-
-            {/* Business Name */}
-            <div className="mb-4">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Business Name
-              </label>
-              <input
-                type="text"
-                value={form.business_name}
-                onChange={(e) => updateField("business_name", e.target.value)}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C]"
-                placeholder="e.g. Miami Auto Detailing"
-              />
-            </div>
-
-            {/* Category */}
-            <div className="mb-4">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Category
-              </label>
-              <select
-                value={form.category}
-                onChange={(e) => updateField("category", e.target.value)}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C]"
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Discount */}
-            <div className="mb-4">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Discount
-              </label>
-              <input
-                type="text"
-                value={form.discount}
-                onChange={(e) => updateField("discount", e.target.value)}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C]"
-                placeholder="e.g. 25% OFF"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="mb-4">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Description
-              </label>
-              <textarea
-                value={form.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                rows={3}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C] resize-none"
-                placeholder="Partner description..."
-              />
-            </div>
-
-            {/* Discount Code */}
-            <div className="mb-4">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Discount Code
-              </label>
-              <input
-                type="text"
-                value={form.discount_code}
-                onChange={(e) => updateField("discount_code", e.target.value)}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C]"
-                placeholder="e.g. TTMC25"
-              />
-            </div>
-
-            {/* Website URL */}
-            <div className="mb-6">
-              <label className="text-[11px] tracking-[2px] text-[#C9A84C] uppercase mb-1.5 block">
-                Website URL
-              </label>
-              <input
-                type="url"
-                value={form.website_url}
-                onChange={(e) => updateField("website_url", e.target.value)}
-                className="w-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-lg px-3 py-2.5 text-[13px] text-[#F5F5F0] outline-none focus:border-[#C9A84C]"
-                placeholder="https://example.com"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2.5 rounded-lg text-[12px] font-medium text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={submitting || !form.business_name || !form.discount}
-                className="bg-[#C9A84C] text-[#0A0A0A] rounded-lg px-4 py-2.5 text-[12px] font-semibold hover:bg-[#E8D48B] transition-colors disabled:opacity-50"
-              >
-                {submitting ? "Adding..." : "Add Partner"}
-              </button>
-            </div>
-          </div>
+      {(banner || error) && (
+        <div className="mb-4 rounded-lg border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.1)] px-3.5 py-2.5 text-[12px] text-[#ef8c8c]">
+          {banner || error}
         </div>
       )}
+
+      {loading && partners.length === 0 ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-16 rounded-lg bg-[#111111] border border-[rgba(255,255,255,0.06)] animate-pulse"
+            />
+          ))}
+        </div>
+      ) : partners.length === 0 ? (
+        <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111111] p-12 text-center text-[13px] text-[rgba(245,245,240,0.45)]">
+          No partners yet.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#111111]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {[
+                  "Partner",
+                  "Category",
+                  "Tier / Status",
+                  "Billing",
+                  "Offers",
+                  "Live",
+                  "",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left text-[10px] tracking-[1.5px] uppercase text-[rgba(245,245,240,0.25)] px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] font-semibold"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {partners.map((p) => (
+                <tr
+                  key={p.id}
+                  className="hover:bg-[rgba(201,168,76,0.04)]"
+                >
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)]">
+                    <div className="text-[13px] font-semibold text-[#F5F5F0]">
+                      {p.name}{" "}
+                      {p.featured && (
+                        <span className="text-[#C9A84C]">★</span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-[rgba(245,245,240,0.45)]">
+                      {p.contact_email || p.website || "—"}
+                    </div>
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[12px] text-[rgba(245,245,240,0.7)]">
+                    {p.category}
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[12px] text-[rgba(245,245,240,0.7)]">
+                    {p.package || p.partner_tier} · {p.partner_status}
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[12px] text-[rgba(245,245,240,0.7)]">
+                    {p.paid_status || "—"}
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[12px]">
+                    <button
+                      type="button"
+                      onClick={() => setOffersFor(p)}
+                      className="text-[#C9A84C] hover:underline font-semibold"
+                    >
+                      {p.offers.length} offer
+                      {p.offers.length === 1 ? "" : "s"}
+                    </button>
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[12px]">
+                    <span
+                      style={{
+                        color: p.is_active ? "#22c55e" : "#9aa0a6",
+                      }}
+                    >
+                      {p.is_active ? "Active" : "Hidden"}
+                    </span>
+                  </td>
+                  <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-right whitespace-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(p)}
+                      className="text-[11px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0] mr-3"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removePartner(p)}
+                      className="text-[11px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#ef4444]"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {edit && (
+        <PartnerModal
+          state={edit}
+          setState={setEdit}
+          onSave={savePartner}
+          busy={busy}
+          banner={banner}
+        />
+      )}
+      {offersFor && (
+        <OffersModal
+          partner={offersFor}
+          onClose={() => setOffersFor(null)}
+          onChanged={refetch}
+        />
+      )}
     </div>
+  );
+}
+
+function PartnerModal({
+  state,
+  setState,
+  onSave,
+  busy,
+  banner,
+}: {
+  state: { id: string | null; form: typeof EMPTY_PARTNER };
+  setState: (s: { id: string | null; form: typeof EMPTY_PARTNER } | null) => void;
+  onSave: () => void;
+  busy: boolean;
+  banner: string | null;
+}) {
+  const f = state.form;
+  const set = (k: keyof typeof EMPTY_PARTNER, v: unknown) =>
+    setState({ ...state, form: { ...f, [k]: v } });
+
+  const text: [keyof typeof EMPTY_PARTNER, string][] = [
+    ["name", "Name *"],
+    ["category", "Category *"],
+    ["contact_name", "Contact name"],
+    ["contact_email", "Contact email"],
+    ["contact_phone", "Contact phone"],
+    ["website", "Website"],
+    ["logo_url", "Logo URL"],
+    ["hero_image_url", "Hero image URL"],
+    ["discount_code", "Discount code"],
+    ["pay_link", "Pay link"],
+  ];
+
+  return (
+    <>
+      <div
+        onClick={() => setState(null)}
+        className="fixed inset-0 bg-black/60 z-40"
+      />
+      <div className="fixed left-1/2 top-1/2 z-50 w-[680px] max-w-[95vw] max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[#0d0d0d] p-7 shadow-2xl">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[18px] font-bold text-[#F5F5F0]">
+            {state.id ? "Edit partner" : "New partner"}
+          </h2>
+          <button
+            type="button"
+            onClick={() => setState(null)}
+            className="text-[20px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+          >
+            ✕
+          </button>
+        </div>
+        {banner && (
+          <div className="mb-4 rounded-lg border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.1)] px-3.5 py-2.5 text-[12px] text-[#ef8c8c]">
+            {banner}
+          </div>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+          {text.map(([k, lbl]) => (
+            <div key={k}>
+              <label className={label}>{lbl}</label>
+              <input
+                value={String(f[k] ?? "")}
+                onChange={(e) => set(k, e.target.value)}
+                className={field}
+              />
+            </div>
+          ))}
+          <div>
+            <label className={label}>Package</label>
+            <select
+              value={f.package}
+              onChange={(e) => set("package", e.target.value)}
+              className={field}
+            >
+              {["SUPPORTER", "PREMIUM", "PRESTIGE"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Paid status</label>
+            <select
+              value={f.paid_status}
+              onChange={(e) => set("paid_status", e.target.value)}
+              className={field}
+            >
+              {["pending", "active", "inactive", "expired", "comped"].map(
+                (o) => (
+                  <option key={o}>{o}</option>
+                )
+              )}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Visibility tier</label>
+            <select
+              value={f.visibility_tier}
+              onChange={(e) => set("visibility_tier", e.target.value)}
+              className={field}
+            >
+              {["ALL", "CORE", "VIP"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={label}>Display order</label>
+            <input
+              type="number"
+              value={f.display_order}
+              onChange={(e) => set("display_order", e.target.value)}
+              className={field}
+            />
+          </div>
+          <div>
+            <label className={label}>Featured until</label>
+            <input
+              type="date"
+              value={f.featured_until}
+              onChange={(e) => set("featured_until", e.target.value)}
+              className={field}
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={label}>Description</label>
+            <textarea
+              value={f.description}
+              onChange={(e) => set("description", e.target.value)}
+              rows={2}
+              className={`${field} resize-y`}
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={label}>Benefit details</label>
+            <textarea
+              value={f.benefit_details}
+              onChange={(e) => set("benefit_details", e.target.value)}
+              rows={2}
+              className={`${field} resize-y`}
+            />
+          </div>
+          <div className="col-span-2">
+            <label className={label}>Internal notes</label>
+            <textarea
+              value={f.internal_notes}
+              onChange={(e) => set("internal_notes", e.target.value)}
+              rows={2}
+              className={`${field} resize-y`}
+            />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-5 mt-4">
+          {(
+            [
+              ["is_active", "Active (visible)"],
+              ["is_featured", "Featured"],
+            ] as const
+          ).map(([k, lbl]) => (
+            <label
+              key={k}
+              className="flex items-center gap-2 text-[12px] text-[rgba(245,245,240,0.7)] cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(f[k])}
+                onChange={(e) => set(k, e.target.checked)}
+                className="accent-[#C9A84C]"
+              />
+              {lbl}
+            </label>
+          ))}
+        </div>
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setState(null)}
+            className="rounded-lg border border-[rgba(255,255,255,0.1)] px-4 py-2.5 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={busy}
+            className="rounded-lg bg-[#C9A84C] px-5 py-2.5 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965] disabled:opacity-40"
+          >
+            {busy ? "Saving…" : state.id ? "Save changes" : "Create"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function OffersModal({
+  partner,
+  onClose,
+  onChanged,
+}: {
+  partner: PartnerRow;
+  onClose: () => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [offers, setOffers] = useState<PartnerOffer[]>(partner.offers);
+  const [form, setForm] = useState({ ...EMPTY_OFFER });
+  const [editing, setEditing] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    setBusy(true);
+    const body = editing
+      ? { id: editing, ...form }
+      : { partner_id: partner.id, ...form };
+    const r = editing
+      ? await adminMutate("/api/admin/partner-offers", "PATCH", body)
+      : await adminMutate("/api/admin/partner-offers", "POST", body);
+    setBusy(false);
+    if (r.ok) {
+      setForm({ ...EMPTY_OFFER });
+      setEditing(null);
+      await onChanged();
+      // Optimistic local refresh
+      setOffers((prev) =>
+        editing
+          ? prev.map((o) =>
+              o.id === editing ? ({ ...o, ...form } as PartnerOffer) : o
+            )
+          : [
+              ...prev,
+              {
+                id: `tmp-${Date.now()}`,
+                partner_id: partner.id,
+                ...form,
+              } as PartnerOffer,
+            ]
+      );
+    }
+  }
+
+  async function del(id: string) {
+    await adminMutate("/api/admin/partner-offers", "DELETE", { id });
+    setOffers((prev) => prev.filter((o) => o.id !== id));
+    await onChanged();
+  }
+
+  const field2 =
+    "w-full rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2 text-[13px] text-[#F5F5F0] outline-none focus:border-[rgba(201,168,76,0.35)]";
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        className="fixed inset-0 bg-black/60 z-40"
+      />
+      <div className="fixed left-1/2 top-1/2 z-50 w-[620px] max-w-[95vw] max-h-[88vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[#0d0d0d] p-7 shadow-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[18px] font-bold text-[#F5F5F0]">
+            {partner.name} — Offers
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[20px] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-2 mb-5">
+          {offers.length === 0 ? (
+            <div className="text-[12px] italic text-[rgba(245,245,240,0.25)]">
+              No offers yet.
+            </div>
+          ) : (
+            offers.map((o) => (
+              <div
+                key={o.id}
+                className="flex items-center justify-between rounded-lg border border-[rgba(255,255,255,0.07)] bg-[#171717] px-3 py-2.5"
+              >
+                <div>
+                  <div className="text-[13px] font-semibold text-[#F5F5F0]">
+                    {o.title}
+                  </div>
+                  <div className="text-[11px] text-[rgba(245,245,240,0.45)]">
+                    {o.access_level} · {o.status}
+                    {o.code_value ? ` · ${o.code_value}` : ""}
+                  </div>
+                </div>
+                <div className="whitespace-nowrap">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(o.id);
+                      setForm({
+                        title: o.title,
+                        access_level: o.access_level,
+                        redemption_type: o.redemption_type,
+                        code_value: o.code_value ?? "",
+                        redemption_instructions:
+                          o.redemption_instructions ?? "",
+                        status: o.status,
+                        expires_at: o.expires_at
+                          ? o.expires_at.slice(0, 10)
+                          : "",
+                      });
+                    }}
+                    className="text-[11px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0] mr-3"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => del(o.id)}
+                    className="text-[11px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#ef4444]"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="border-t border-[rgba(255,255,255,0.07)] pt-4">
+          <div className="text-[10px] tracking-[2px] uppercase text-[#C9A84C] mb-3">
+            {editing ? "Edit offer" : "Add offer"}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              placeholder="Title *"
+              value={form.title}
+              onChange={(e) =>
+                setForm({ ...form, title: e.target.value })
+              }
+              className={`${field2} col-span-2`}
+            />
+            <select
+              value={form.access_level}
+              onChange={(e) =>
+                setForm({ ...form, access_level: e.target.value })
+              }
+              className={field2}
+            >
+              {["ALL", "CORE", "VIP", "STRATEGIC"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+            <select
+              value={form.status}
+              onChange={(e) =>
+                setForm({ ...form, status: e.target.value })
+              }
+              className={field2}
+            >
+              {["ACTIVE", "INACTIVE", "EXPIRED"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+            <input
+              placeholder="Redemption type"
+              value={form.redemption_type}
+              onChange={(e) =>
+                setForm({ ...form, redemption_type: e.target.value })
+              }
+              className={field2}
+            />
+            <input
+              placeholder="Code value"
+              value={form.code_value}
+              onChange={(e) =>
+                setForm({ ...form, code_value: e.target.value })
+              }
+              className={field2}
+            />
+            <input
+              type="date"
+              value={form.expires_at}
+              onChange={(e) =>
+                setForm({ ...form, expires_at: e.target.value })
+              }
+              className={`${field2} col-span-2`}
+            />
+            <textarea
+              placeholder="Redemption instructions"
+              value={form.redemption_instructions}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  redemption_instructions: e.target.value,
+                })
+              }
+              rows={2}
+              className={`${field2} col-span-2 resize-y`}
+            />
+          </div>
+          <div className="mt-3 flex gap-2">
+            {editing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditing(null);
+                  setForm({ ...EMPTY_OFFER });
+                }}
+                className="rounded-lg border border-[rgba(255,255,255,0.1)] px-4 py-2 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              >
+                Cancel edit
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={save}
+              disabled={busy || !form.title.trim()}
+              className="rounded-lg bg-[#C9A84C] px-5 py-2 text-[12px] font-semibold text-[#0A0A0A] hover:bg-[#d8b965] disabled:opacity-40"
+            >
+              {busy
+                ? "Saving…"
+                : editing
+                  ? "Save offer"
+                  : "Add offer"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
