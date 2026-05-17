@@ -15,6 +15,12 @@ const MANAGEMENT_LINKS = [
   { href: "/admin", label: "Pipeline", icon: "📊", showBadge: true },
   { href: "/admin/events", label: "Events", icon: "📅", showBadge: false },
   {
+    href: "/admin/catalog",
+    label: "Catalog",
+    icon: "🚗",
+    showBadge: false,
+  },
+  {
     href: "/admin/invite-codes",
     label: "Invite Codes",
     icon: "🎟️",
