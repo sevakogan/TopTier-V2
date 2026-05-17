@@ -294,33 +294,88 @@ export async function getPersonRecord(
 /** SAFE, reversible stage transitions only — mapped exactly to V1 columns.
  *  Does NOT fabricate auth users / member_profiles (that is V1's
  *  invitation+convert flow). Returns false on unsupported transitions. */
+function isMissingColumn(err: { message?: string; code?: string }): boolean {
+  return (
+    err?.code === "42703" ||
+    /claimed_by|claimed_at|column .* does not exist/i.test(
+      err?.message ?? ""
+    )
+  );
+}
+
 export async function moveStage(input: {
   type: PersonType;
   recordId: string;
   to: string;
+  /** Acting admin's auth user id — used to stamp lead claims. */
+  actorId?: string;
 }): Promise<{ ok: boolean; message?: string }> {
   const db = createServiceClient();
   const now = new Date().toISOString();
 
   if (input.type === "applicant") {
-    const map: Record<string, string> = {
-      New: "PENDING",
-      Review: "APPROVED",
-      Declined: "REJECTED",
-    };
-    const status = map[input.to];
-    if (!status) {
+    // "Payment Requested" is the automation path (plan confirm + send
+    // invite/payment link) — never a silent status flip here.
+    if (input.to === "PaymentRequested") {
       return {
         ok: false,
         message:
-          "Turning an applicant into a member uses the invite + signup flow — approve here, then send the invitation.",
+          "Use “Send invitation” (pick a plan) — that approves them and emails the payment link.",
       };
     }
-    const { error } = await db
+
+    // Claim / release: In Review = claimed by an admin (status stays
+    // PENDING). New / Declined release the claim.
+    if (input.to === "InReview") {
+      const { error } = await db
+        .from("invite_requests")
+        .update({
+          claimed_by: input.actorId ?? null,
+          claimed_at: now,
+          updated_at: now,
+        })
+        .eq("id", input.recordId);
+      if (error) {
+        return {
+          ok: false,
+          message: isMissingColumn(error)
+            ? "In Review needs the one-line claim migration — run it in Supabase, then this works."
+            : error.message,
+        };
+      }
+      return { ok: true };
+    }
+
+    const status =
+      input.to === "New"
+        ? "PENDING"
+        : input.to === "Declined"
+          ? "REJECTED"
+          : null;
+    if (!status)
+      return { ok: false, message: "Unsupported lead transition." };
+
+    // Release the claim alongside the status change (best-effort: if the
+    // claim columns aren't there yet, just move the status).
+    const withClaim = await db
       .from("invite_requests")
-      .update({ status, updated_at: now })
+      .update({
+        status,
+        claimed_by: null,
+        claimed_at: null,
+        updated_at: now,
+      })
       .eq("id", input.recordId);
-    return error ? { ok: false, message: error.message } : { ok: true };
+    if (withClaim.error) {
+      if (!isMissingColumn(withClaim.error))
+        return { ok: false, message: withClaim.error.message };
+      const { error } = await db
+        .from("invite_requests")
+        .update({ status, updated_at: now })
+        .eq("id", input.recordId);
+      return error ? { ok: false, message: error.message } : { ok: true };
+    }
+    return { ok: true };
   }
 
   // member_profiles: tier change / decline / reactivate (recordId = mp.id)

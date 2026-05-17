@@ -141,6 +141,20 @@ export function AdminDataProvider({
     refetch();
   }, [refetch]);
 
+  // Keep the board live: a paid member (Stripe webhook) / converted lead
+  // slides into Clients on its own. Quiet 30s poll + refresh on focus.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refetch();
+    }, 30000);
+    const onFocus = () => void refetch();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refetch]);
+
   return (
     <AdminPipelineContext.Provider
       value={{ items, loading, error, refetch, getPerson, loadPerson }}

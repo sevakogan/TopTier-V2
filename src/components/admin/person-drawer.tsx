@@ -228,8 +228,6 @@ export function PersonDrawer({
     }
   }
 
-  const rejected =
-    record?.headline?.toUpperCase().includes("REJECTED") ?? false;
 
   return (
     <>
@@ -301,10 +299,16 @@ export function PersonDrawer({
               <>
                 <div className="flex flex-wrap gap-2 mb-3">
                   <ActionButton
-                    label="Move to In Review"
+                    label="Mark In Review (claim)"
                     variant="go"
                     disabled={busy || loading}
-                    onClick={() => move("Review")}
+                    onClick={() => move("InReview")}
+                  />
+                  <ActionButton
+                    label="Back to New"
+                    variant="default"
+                    disabled={busy || loading}
+                    onClick={() => move("New")}
                   />
                   <ActionButton
                     label="Decline"
@@ -312,18 +316,11 @@ export function PersonDrawer({
                     disabled={busy || loading}
                     onClick={() => move("Declined")}
                   />
-                  {rejected && (
-                    <ActionButton
-                      label="Reopen"
-                      variant="default"
-                      disabled={busy || loading}
-                      onClick={() => move("New")}
-                    />
-                  )}
                 </div>
                 <div className="mb-2 rounded-lg border border-dashed border-[rgba(201,168,76,0.3)] px-3.5 py-3 text-[12px] leading-relaxed text-[rgba(245,245,240,0.45)]">
-                  Turning an applicant into a member uses the invite + signup
-                  flow — approve here, then send the invitation.
+                  To request payment: drag the card to{" "}
+                  <b>Payment Requested</b> (or use the Invitations page) —
+                  that approves them and emails the payment link.
                 </div>
               </>
             )}

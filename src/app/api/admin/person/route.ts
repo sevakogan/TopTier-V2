@@ -1,34 +1,12 @@
 // Person drawer: full record (GET), stage move (POST), notes (PUT).
-// Admin-guarded, service-role.
+// Admin-guarded (shared requireAdmin), service-role.
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { requireAdmin } from "@/lib/backend/admin-auth";
 import { getPersonRecord, moveStage, saveNotes } from "@/lib/backend/person";
 import type { PersonType } from "@/lib/backend/pipeline";
 
-const ADMIN_EMAILS = new Set([
-  "sevakogan@gmail.com",
-  "seva@thelevelteam.com",
-  "daotoptiermiami@aol.com",
-]);
-
-async function isAdmin(req: NextRequest): Promise<boolean> {
-  const token = (req.headers.get("authorization") ?? "").replace(
-    /^Bearer\s+/i,
-    ""
-  );
-  if (!token) return false;
-  const c = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-  const {
-    data: { user },
-  } = await c.auth.getUser(token);
-  return Boolean(user?.email && ADMIN_EMAILS.has(user.email));
-}
-
 export async function GET(req: NextRequest) {
-  if (!(await isAdmin(req)))
+  if (!(await requireAdmin(req)))
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const type = req.nextUrl.searchParams.get("type") as PersonType | null;
   const id = req.nextUrl.searchParams.get("id");
@@ -41,23 +19,32 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!(await isAdmin(req)))
+  const admin = await requireAdmin(req);
+  if (!admin)
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
     const { type, recordId, to } = await req.json();
     if (!type || !recordId || !to)
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-    const r = await moveStage({ type, recordId, to });
+    const r = await moveStage({
+      type,
+      recordId,
+      to,
+      actorId: admin.userId,
+    });
     return r.ok
       ? NextResponse.json({ success: true })
-      : NextResponse.json({ error: r.message ?? "Move failed" }, { status: 422 });
+      : NextResponse.json(
+          { error: r.message ?? "Move failed" },
+          { status: 422 }
+        );
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
 
 export async function PUT(req: NextRequest) {
-  if (!(await isAdmin(req)))
+  if (!(await requireAdmin(req)))
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
     const { type, recordId, notes } = await req.json();
