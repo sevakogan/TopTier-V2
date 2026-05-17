@@ -39,6 +39,7 @@ export interface PipelineItem {
   stage: PipelineStage;
   name: string;
   email: string;
+  phone: string;
   /** One-line context for the card (tier/car/etc.). */
   subtitle: string;
   createdAt: string | null;
@@ -68,7 +69,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
   const { data: invites } = await db
     .from("invite_requests")
     .select(
-      "id, first_name, last_name, email, car_driving, selected_tier, status, created_at"
+      "id, first_name, last_name, email, phone, car_driving, selected_tier, status, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -92,6 +93,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
       stage,
       name,
       email: (r.email as string) ?? "",
+      phone: (r.phone as string) ?? "",
       subtitle: [tier, r.car_driving].filter(Boolean).join(" · ") || "Applicant",
       createdAt: (r.created_at as string) ?? null,
     });
@@ -112,16 +114,22 @@ export async function getPipeline(): Promise<PipelineItem[]> {
 
   const profileMap = new Map<
     string,
-    { name: string | null; email: string | null; created_at: string | null }
+    {
+      name: string | null;
+      email: string | null;
+      phone: string | null;
+      created_at: string | null;
+    }
   >();
   // Pull every profile up front (need it for the Garage bucket too).
   const { data: allProfiles } = await db
     .from("profiles")
-    .select("id, name, email, created_at");
+    .select("id, name, email, phone, created_at");
   for (const p of allProfiles ?? []) {
     profileMap.set(p.id as string, {
       name: (p.name as string | null) ?? null,
       email: (p.email as string | null) ?? null,
+      phone: (p.phone as string | null) ?? null,
       created_at: (p.created_at as string | null) ?? null,
     });
   }
@@ -156,6 +164,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
       stage,
       name,
       email,
+      phone: prof?.phone || "",
       subtitle:
         stage === "Garage"
           ? "Garage Pass · free"
@@ -182,6 +191,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
       stage: "Garage",
       name: prof.name || prof.email || "Garage Pass",
       email: prof.email || "",
+      phone: prof.phone || "",
       subtitle: "Garage Pass · free",
       createdAt: prof.created_at,
     });
@@ -190,7 +200,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
   // --- trusted_partners -> Partners ---
   const { data: partners } = await db
     .from("trusted_partners")
-    .select("id, name, category, discount_code, is_active, created_at")
+    .select("id, name, category, contact_phone, discount_code, is_active, created_at")
     .order("created_at", { ascending: false });
 
   for (const p of partners ?? []) {
@@ -201,6 +211,7 @@ export async function getPipeline(): Promise<PipelineItem[]> {
       stage: "Partners",
       name: (p.name as string) ?? "Partner",
       email: "",
+      phone: (p.contact_phone as string | null) ?? "",
       subtitle:
         [p.category, p.discount_code].filter(Boolean).join(" · ") || "Partner",
       createdAt: (p.created_at as string | null) ?? null,

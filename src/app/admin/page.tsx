@@ -334,7 +334,7 @@ export default function PipelinePage() {
           <table className="w-full border-collapse">
             <thead>
               <tr>
-                {["Name", "Type", "Tier / Status", "Email", "Since"].map(
+                {["Name", "Type", "Tier / Status", "Email", "Phone", "Since"].map(
                   (h) => (
                     <th
                       key={h}
@@ -350,7 +350,7 @@ export default function PipelinePage() {
               {visibleItems.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-3.5 py-12 text-center text-[13px] text-[rgba(245,245,240,0.45)]"
                   >
                     No matching people.
@@ -379,6 +379,9 @@ export default function PipelinePage() {
                     </td>
                     <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.7)]">
                       {item.email || "—"}
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.7)]">
+                      {item.phone || "—"}
                     </td>
                     <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.45)]">
                       {shortDate(item.createdAt)}
