@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Outfit } from "next/font/google";
 import "./globals.css";
-import { LenisProvider } from "@/components/lenis-provider";
-import { NoiseOverlay } from "@/components/noise-overlay";
-import { CursorGlow } from "@/components/cursor-glow";
-import { ScrollProgress } from "@/components/scroll-progress";
-import { Nav } from "@/components/nav";
-import { Footer } from "@/components/footer";
-import { MemberCountPill } from "@/components/ambient/member-count-pill";
-import { EventStatusWidget } from "@/components/ambient/event-status-widget";
-import { MiamiSkyline } from "@/components/ambient/miami-skyline";
+import { SiteChrome } from "@/components/site-chrome";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
@@ -46,17 +38,7 @@ export default function RootLayout({
       className={`${cormorant.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col overflow-x-hidden bg-[var(--background)] font-sans text-[var(--foreground)]">
-        <LenisProvider>
-          {/* <NoiseOverlay /> */}
-          <CursorGlow />
-          <ScrollProgress />
-          <Nav />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <MemberCountPill />
-          <EventStatusWidget />
-          <MiamiSkyline />
-        </LenisProvider>
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );
