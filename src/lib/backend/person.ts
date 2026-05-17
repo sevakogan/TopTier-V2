@@ -1,0 +1,366 @@
+// SERVER-ONLY. Full type-aware record for the pipeline drawer + the safe
+// stage transitions. Service-role; API routes only.
+
+import { createServiceClient } from "@/lib/supabase-server";
+import type { PersonType } from "./pipeline";
+
+/** A labelled section of key/value rows for the drawer. */
+export interface RecordSection {
+  title: string;
+  rows: { label: string; value: string }[];
+}
+
+export interface PersonRecord {
+  type: PersonType;
+  name: string;
+  headline: string;
+  sections: RecordSection[];
+  /** car photos / partner media URLs to render as a gallery. */
+  media: string[];
+  notes: string | null;
+}
+
+function v(x: unknown): string {
+  if (x === null || x === undefined || x === "") return "—";
+  if (typeof x === "boolean") return x ? "Yes" : "No";
+  return String(x);
+}
+
+function fmt(d: unknown): string {
+  if (!d) return "—";
+  const date = new Date(String(d));
+  return isNaN(date.getTime())
+    ? String(d)
+    : date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+}
+
+export async function getPersonRecord(
+  type: PersonType,
+  recordId: string
+): Promise<PersonRecord | null> {
+  const db = createServiceClient();
+
+  if (type === "applicant") {
+    const { data: r } = await db
+      .from("invite_requests")
+      .select("*")
+      .eq("id", recordId)
+      .maybeSingle();
+    if (!r) return null;
+    const name =
+      `${r.first_name ?? ""} ${r.last_name ?? ""}`.trim() || r.email;
+    return {
+      type,
+      name,
+      headline: `Applicant · ${v(r.status)}`,
+      media: [],
+      notes: null,
+      sections: [
+        {
+          title: "Contact",
+          rows: [
+            { label: "Full name", value: name },
+            { label: "Email", value: v(r.email) },
+            { label: "Phone", value: v(r.phone) },
+            { label: "Instagram", value: v(r.instagram_handle) },
+            { label: "Age", value: v(r.age) },
+            { label: "Referred by", value: v(r.referred_by) },
+          ],
+        },
+        {
+          title: "Application",
+          rows: [
+            { label: "Tier requested", value: v(r.selected_tier) },
+            { label: "Status", value: v(r.status) },
+            { label: "Submitted", value: fmt(r.created_at) },
+            { label: "Updated", value: fmt(r.updated_at) },
+            { label: "Type of work", value: v(r.type_of_work) },
+          ],
+        },
+        {
+          title: "Vehicle",
+          rows: [
+            { label: "Car", value: v(r.car_driving) },
+            { label: "License plate", value: v(r.license_plate) },
+          ],
+        },
+        {
+          title: "Invitation",
+          rows: [
+            { label: "Token", value: v(r.invitation_token) },
+            { label: "Sent", value: fmt(r.invitation_sent_at) },
+            { label: "Expires", value: fmt(r.invitation_expires_at) },
+            { label: "Invite code id", value: v(r.invite_code_id) },
+          ],
+        },
+      ],
+    };
+  }
+
+  if (type === "partner") {
+    const { data: p } = await db
+      .from("trusted_partners")
+      .select("*")
+      .eq("id", recordId)
+      .maybeSingle();
+    if (!p) return null;
+    const { data: offers } = await db
+      .from("partner_offers")
+      .select("title, access_level, code_value, status, expires_at")
+      .eq("partner_id", recordId);
+    const media = [p.logo_url, p.hero_image_url].filter(
+      (x): x is string => Boolean(x)
+    );
+    return {
+      type,
+      name: p.name as string,
+      headline: `Partner · ${v(p.category)}`,
+      media,
+      notes: (p.internal_notes as string | null) ?? null,
+      sections: [
+        {
+          title: "Contact",
+          rows: [
+            { label: "Business", value: v(p.name) },
+            { label: "Contact name", value: v(p.contact_name) },
+            { label: "Email", value: v(p.contact_email) },
+            { label: "Phone", value: v(p.contact_phone) },
+            { label: "Website", value: v(p.website) },
+          ],
+        },
+        {
+          title: "Deal",
+          rows: [
+            { label: "Category", value: v(p.category) },
+            { label: "Discount code", value: v(p.discount_code) },
+            { label: "Benefit", value: v(p.benefit_details) },
+            { label: "Visibility tier", value: v(p.visibility_tier) },
+            { label: "Partner tier", value: v(p.partner_tier) },
+            { label: "Partner status", value: v(p.partner_status) },
+            { label: "Paid status", value: v(p.paid_status) },
+            { label: "Pay link", value: v(p.pay_link) },
+            { label: "Active", value: v(p.is_active) },
+            { label: "Featured", value: v(p.is_featured) },
+          ],
+        },
+        {
+          title: "Description",
+          rows: [{ label: "About", value: v(p.description) }],
+        },
+        {
+          title: `Offers (${offers?.length ?? 0})`,
+          rows: (offers ?? []).map((o) => ({
+            label: v(o.title),
+            value: `${v(o.access_level)} · ${v(o.status)}`,
+          })),
+        },
+      ],
+    };
+  }
+
+  // member OR garage — both keyed by member_profiles.id OR a profiles.id
+  // (Garage rows with no member_profiles come through as recordId = profile id)
+  let mp: Record<string, unknown> | null = null;
+  let profileId: string | null = null;
+
+  const { data: mpRow } = await db
+    .from("member_profiles")
+    .select("*")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (mpRow) {
+    mp = mpRow;
+    profileId = (mpRow.user_id as string | null) ?? null;
+  } else {
+    profileId = recordId; // pure Garage Pass (profiles-only)
+  }
+
+  const { data: prof } = profileId
+    ? await db.from("profiles").select("*").eq("id", profileId).maybeSingle()
+    : { data: null };
+
+  const { data: cars } = profileId
+    ? await db
+        .from("garages")
+        .select("car_name, brand, model, year, horsepower, mods, photos")
+        .eq("user_id", profileId)
+    : { data: null };
+
+  const { data: vehicles } = profileId
+    ? await db
+        .from("vehicles")
+        .select("make, model, year, plate, vin, verification_status")
+        .eq("member_id", recordId)
+    : { data: null };
+
+  const media: string[] = [];
+  for (const c of cars ?? []) {
+    const photos = (c.photos as string[] | null) ?? [];
+    media.push(...photos);
+  }
+
+  const isMember = Boolean(mp && mp.tier && mp.tier !== "ACCESS");
+  const name =
+    (prof?.name as string) || (prof?.email as string) || "Member";
+
+  const sections: RecordSection[] = [
+    {
+      title: "Contact",
+      rows: [
+        { label: "Name", value: name },
+        { label: "Email", value: v(prof?.email) },
+        { label: "Phone", value: v(prof?.phone) },
+        { label: "Instagram", value: v(prof?.instagram_handle) },
+        { label: "City", value: v(prof?.city) },
+        { label: "Country", value: v(prof?.country) },
+        { label: "Last login", value: fmt(prof?.last_login_at) },
+        { label: "Joined", value: fmt(prof?.created_at) },
+      ],
+    },
+  ];
+
+  if (mp) {
+    sections.push({
+      title: "Membership",
+      rows: [
+        { label: "Tier", value: v(mp.tier) },
+        { label: "Membership status", value: v(mp.membership_status) },
+        { label: "Status", value: v(mp.status) },
+        { label: "Started", value: fmt(mp.membership_started_at) },
+        { label: "Expires", value: fmt(mp.membership_expires_at) },
+        { label: "Renewal", value: fmt(mp.renewal_date) },
+        { label: "Waiver accepted", value: fmt(mp.waiver_accepted_at) },
+        {
+          label: "Concierge this month",
+          value: v(mp.concierge_requests_this_month),
+        },
+        { label: "Member chat", value: v(mp.chat_member_access) },
+        { label: "Inner circle chat", value: v(mp.chat_inner_circle_access) },
+      ],
+    });
+    sections.push({
+      title: "Billing",
+      rows: [
+        { label: "Stripe customer", value: v(mp.stripe_customer_id) },
+        { label: "Subscription", value: v(mp.stripe_subscription_id) },
+      ],
+    });
+  } else {
+    sections.push({
+      title: "Membership",
+      rows: [{ label: "Status", value: "Garage Pass · free (no membership)" }],
+    });
+  }
+
+  sections.push({
+    title: `Garage (${cars?.length ?? 0})`,
+    rows: (cars ?? []).map((c) => ({
+      label:
+        [c.year, c.brand, c.model].filter(Boolean).join(" ") ||
+        v(c.car_name),
+      value: [c.horsepower ? `${c.horsepower}hp` : null, c.mods]
+        .filter(Boolean)
+        .join(" · "),
+    })),
+  });
+
+  if ((vehicles ?? []).length > 0) {
+    sections.push({
+      title: "Vehicle verification",
+      rows: (vehicles ?? []).map((vh) => ({
+        label:
+          [vh.year, vh.make, vh.model].filter(Boolean).join(" ") || "Vehicle",
+        value: `${v(vh.plate)} · ${v(vh.verification_status)}`,
+      })),
+    });
+  }
+
+  return {
+    type: isMember ? "member" : "garage",
+    name,
+    headline: isMember
+      ? `${v(mp?.tier)} member`
+      : "Garage Pass · free",
+    media,
+    notes: (mp?.internal_notes as string | null) ?? null,
+    sections,
+  };
+}
+
+/** SAFE, reversible stage transitions only — mapped exactly to V1 columns.
+ *  Does NOT fabricate auth users / member_profiles (that is V1's
+ *  invitation+convert flow). Returns false on unsupported transitions. */
+export async function moveStage(input: {
+  type: PersonType;
+  recordId: string;
+  to: string;
+}): Promise<{ ok: boolean; message?: string }> {
+  const db = createServiceClient();
+  const now = new Date().toISOString();
+
+  if (input.type === "applicant") {
+    const map: Record<string, string> = {
+      New: "PENDING",
+      Review: "APPROVED",
+      Declined: "REJECTED",
+    };
+    const status = map[input.to];
+    if (!status) {
+      return {
+        ok: false,
+        message:
+          "Turning an applicant into a member uses the invite + signup flow — approve here, then send the invitation.",
+      };
+    }
+    const { error } = await db
+      .from("invite_requests")
+      .update({ status, updated_at: now })
+      .eq("id", input.recordId);
+    return error ? { ok: false, message: error.message } : { ok: true };
+  }
+
+  // member_profiles: tier change / decline / reactivate (recordId = mp.id)
+  if (input.type === "member" || input.type === "garage") {
+    const tierMap: Record<string, { tier: string; status: string }> = {
+      Core: { tier: "CORE", status: "ACTIVE" },
+      VIP: { tier: "EXECUTIVE", status: "ACTIVE" },
+      Strategic: { tier: "STRATEGIC", status: "ACTIVE" },
+      Declined: { tier: "ACCESS", status: "REJECTED" },
+    };
+    const t = tierMap[input.to];
+    if (!t) return { ok: false, message: "Unsupported member transition." };
+    const { error } = await db
+      .from("member_profiles")
+      .update({
+        tier: t.tier,
+        status: t.status,
+        membership_status: t.status,
+        updated_at: now,
+      })
+      .eq("id", input.recordId);
+    return error ? { ok: false, message: error.message } : { ok: true };
+  }
+
+  return { ok: false, message: "Partners are not moved via the pipeline." };
+}
+
+export async function saveNotes(
+  type: PersonType,
+  recordId: string,
+  notes: string
+): Promise<boolean> {
+  const db = createServiceClient();
+  const table =
+    type === "partner" ? "trusted_partners" : "member_profiles";
+  // Only member/partner rows have an internal_notes column in V1.
+  if (type === "applicant" || type === "garage") return false;
+  const { error } = await db
+    .from(table)
+    .update({ internal_notes: notes })
+    .eq("id", recordId);
+  return !error;
+}

@@ -1,362 +1,401 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import type { AdminApplicant, V1InviteStatus } from "@/lib/backend/types";
+import type { PipelineItem, PipelineStage } from "@/lib/backend/pipeline";
+import {
+  PersonDrawer,
+  type DrawerTarget,
+} from "@/components/admin/person-drawer";
 
-type UiStatus = "pending" | "approved" | "rejected";
+type ViewMode = "board" | "table";
 
-type Application = {
-  id: string;
-  name: string;
-  email: string;
-  car: string | null;
-  instagram: string | null;
-  source: string | null;
-  status: UiStatus;
-  created_at: string;
-};
+type FilterKey = PipelineStage | "all";
 
-type TabKey = "new" | "pre-approved" | "rejected";
-
-const TABS: { key: TabKey; label: string; status: UiStatus }[] = [
-  { key: "new", label: "New", status: "pending" },
-  { key: "pre-approved", label: "Pre-Approved", status: "approved" },
-  { key: "rejected", label: "Rejected", status: "rejected" },
+const COLUMNS: { stage: PipelineStage; label: string; color: string }[] = [
+  { stage: "New", label: "New", color: "#eab308" },
+  { stage: "Review", label: "In Review", color: "#3b82f6" },
+  { stage: "Garage", label: "Garage Membership", color: "#9aa0a6" },
+  { stage: "Core", label: "Core", color: "#C9A84C" },
+  { stage: "VIP", label: "VIP", color: "#a855f7" },
+  { stage: "Strategic", label: "Strategic Circle", color: "#22c55e" },
+  { stage: "Partners", label: "Partners", color: "#06b6d4" },
+  { stage: "Declined", label: "Declined", color: "#ef4444" },
 ];
 
-// V1 invite_requests lifecycle -> the 3 admin tabs.
-function toUiStatus(status: V1InviteStatus): UiStatus {
-  if (status === "REJECTED") return "rejected";
-  if (status === "PENDING") return "pending";
-  return "approved"; // APPROVED + CONVERTED both surface as "Pre-Approved"
-}
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "New", label: "New" },
+  { key: "Review", label: "In Review" },
+  { key: "Garage", label: "Garage" },
+  { key: "Core", label: "Core" },
+  { key: "VIP", label: "VIP" },
+  { key: "Strategic", label: "Strategic" },
+  { key: "Partners", label: "Partners" },
+  { key: "Declined", label: "Declined" },
+];
 
-function mapApplicant(a: AdminApplicant): Application {
-  const name = `${a.firstName} ${a.lastName}`.trim() || a.email;
-  return {
-    id: a.id,
-    name,
-    email: a.email,
-    car: a.car,
-    instagram: a.instagram,
-    source: a.referredBy,
-    status: toUiStatus(a.status),
-    created_at: a.createdAt,
-  };
-}
-
-type Stats = {
-  pending: number;
-  approvedThisWeek: number;
-  rejected: number;
-  total: number;
+const STAGE_COLOR: Record<PipelineStage, string> = {
+  New: "#eab308",
+  Review: "#3b82f6",
+  Garage: "#9aa0a6",
+  Core: "#C9A84C",
+  VIP: "#a855f7",
+  Strategic: "#22c55e",
+  Partners: "#06b6d4",
+  Declined: "#ef4444",
 };
 
-function getWeekStart(): string {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString();
-}
+const STAGE_LABEL: Record<PipelineStage, string> = {
+  New: "New",
+  Review: "In Review",
+  Garage: "Garage",
+  Core: "Core",
+  VIP: "VIP",
+  Strategic: "Strategic",
+  Partners: "Partners",
+  Declined: "Declined",
+};
 
-function StatCard({
-  label,
-  value,
-  loading,
-}: {
-  label: string;
-  value: number;
-  loading: boolean;
-}) {
-  return (
-    <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-xl p-5">
-      <div className="text-[11px] tracking-[2px] text-[rgba(245,245,240,0.25)] uppercase mb-2">
-        {label}
-      </div>
-      {loading ? (
-        <div className="h-9 w-16 bg-[rgba(255,255,255,0.04)] rounded animate-pulse" />
-      ) : (
-        <div className="text-3xl font-bold text-[#C9A84C]">{value}</div>
-      )}
-    </div>
-  );
-}
-
-function ApplicationCard({
-  app,
-  onPreApprove,
-  onReject,
-  updating,
-}: {
-  app: Application;
-  onPreApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  updating: string | null;
-}) {
-  const date = new Date(app.created_at).toLocaleDateString("en-US", {
+function shortDate(value: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
-
-  return (
-    <Link
-      href={`/admin/applications/${app.id}`}
-      className="block bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 hover:border-[rgba(255,255,255,0.1)] transition-colors duration-150"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="text-[15px] font-semibold text-[#F5F5F0]">
-            {app.name}
-          </div>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[12px] text-[rgba(245,245,240,0.45)]">
-            <span>{app.email}</span>
-            {app.car && <span>{app.car}</span>}
-            {app.instagram && <span>@{app.instagram.replace("@", "")}</span>}
-            {app.source && <span>{app.source}</span>}
-          </div>
-          <div className="text-[11px] text-[rgba(245,245,240,0.25)] mt-2">
-            {date}
-          </div>
-        </div>
-        {app.status === "pending" && (
-          <div className="flex gap-2 shrink-0">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onPreApprove(app.id);
-              }}
-              disabled={updating === app.id}
-              className="bg-[#22c55e] text-white rounded-lg px-4 py-2 text-[12px] font-semibold hover:bg-[#16a34a] transition-colors disabled:opacity-50"
-            >
-              {updating === app.id ? "..." : "Pre-Approve"}
-            </button>
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onReject(app.id);
-              }}
-              disabled={updating === app.id}
-              className="bg-transparent border border-[rgba(239,68,68,0.3)] text-[#ef4444] rounded-lg px-4 py-2 text-[12px] font-semibold hover:bg-[rgba(239,68,68,0.1)] transition-colors disabled:opacity-50"
-            >
-              Reject
-            </button>
-          </div>
-        )}
-        {app.status !== "pending" && (
-          <span
-            className={`inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold tracking-[1px] ${
-              app.status === "approved"
-                ? "bg-[rgba(34,197,94,0.15)] text-[#22c55e]"
-                : "bg-[rgba(239,68,68,0.15)] text-[#ef4444]"
-            }`}
-          >
-            {app.status === "approved" ? "APPROVED" : "REJECTED"}
-          </span>
-        )}
-      </div>
-    </Link>
-  );
 }
 
-export default function AdminApplicationsPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [stats, setStats] = useState<Stats>({
-    pending: 0,
-    approvedThisWeek: 0,
-    rejected: 0,
-    total: 0,
-  });
-  const [activeTab, setActiveTab] = useState<TabKey>("new");
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null);
+function toTarget(item: PipelineItem): DrawerTarget {
+  return {
+    type: item.type,
+    recordId: item.recordId,
+    name: item.name,
+    subtitle: item.subtitle,
+  };
+}
 
-  const fetchData = useCallback(async () => {
-    let apps: Application[] = [];
+export default function PipelinePage() {
+  const [items, setItems] = useState<PipelineItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<ViewMode>("board");
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawer, setDrawer] = useState<DrawerTarget | null>(null);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+
+  const fetchPipeline = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const token = session?.access_token;
-
-      if (token) {
-        const res = await fetch("/api/admin/applicants", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const payload = (await res.json()) as {
-            applicants?: AdminApplicant[];
-          };
-          apps = (payload.applicants ?? [])
-            .map(mapApplicant)
-            .sort((a, b) => b.created_at.localeCompare(a.created_at));
-        }
+      if (!token) {
+        setError("Session expired. Please sign in again.");
+        setLoading(false);
+        return;
       }
+      const res = await fetch("/api/admin/pipeline", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setError("Could not load the pipeline.");
+        setLoading(false);
+        return;
+      }
+      const payload = (await res.json()) as { items?: PipelineItem[] };
+      setItems(payload.items ?? []);
     } catch {
-      // Silent fallback — degrade to empty list.
+      setError("Could not load the pipeline.");
+    } finally {
+      setLoading(false);
     }
-
-    setApplications(apps);
-
-    const weekStart = getWeekStart();
-    const pending = apps.filter((a) => a.status === "pending").length;
-    const approvedThisWeek = apps.filter(
-      (a) => a.status === "approved" && a.created_at >= weekStart
-    ).length;
-    const rejected = apps.filter((a) => a.status === "rejected").length;
-
-    setStats({
-      pending,
-      approvedThisWeek,
-      rejected,
-      total: apps.length,
-    });
-
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    const mobile = window.matchMedia("(max-width: 760px)").matches;
+    setIsMobile(mobile);
+    setView(mobile ? "table" : "board");
+    fetchPipeline();
+  }, [fetchPipeline]);
 
-  async function postStatus(
-    id: string,
-    status: V1InviteStatus
-  ): Promise<boolean> {
+  async function moveItem(item: PipelineItem, to: PipelineStage) {
+    setMoveError(null);
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       const token = session?.access_token;
-      if (!token) return false;
-
-      const res = await fetch("/api/admin/applicants", {
+      if (!token) {
+        setMoveError("Session expired. Please sign in again.");
+        return;
+      }
+      const res = await fetch("/api/admin/person", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ id, status }),
+        body: JSON.stringify({
+          type: item.type,
+          recordId: item.recordId,
+          to,
+        }),
       });
-      return res.ok;
+      if (!res.ok) {
+        let msg = "That move isn’t allowed.";
+        try {
+          const body = (await res.json()) as { error?: string };
+          if (body.error) msg = body.error;
+        } catch {
+          // keep default
+        }
+        setMoveError(msg);
+      }
     } catch {
-      return false;
+      setMoveError("Something went wrong. Please try again.");
+    } finally {
+      await fetchPipeline();
     }
   }
 
-  async function handlePreApprove(id: string) {
-    setUpdating(id);
-    const ok = await postStatus(id, "APPROVED");
-    if (ok) {
-      setApplications((prev) =>
-        prev.map((a) =>
-          a.id === id ? { ...a, status: "approved" as const } : a
-        )
-      );
-      setStats((prev) => ({
-        ...prev,
-        pending: prev.pending - 1,
-        approvedThisWeek: prev.approvedThisWeek + 1,
-      }));
+  function onDrop(stage: PipelineStage) {
+    if (!dragId) return;
+    const item = items.find((i) => i.id === dragId) ?? null;
+    setDragId(null);
+    if (!item || item.stage === stage) return;
+    if (item.type === "partner") {
+      setMoveError("Partners are not moved via the pipeline.");
+      return;
     }
-    setUpdating(null);
+    moveItem(item, stage);
   }
 
-  async function handleReject(id: string) {
-    setUpdating(id);
-    const ok = await postStatus(id, "REJECTED");
-    if (ok) {
-      setApplications((prev) =>
-        prev.map((a) =>
-          a.id === id ? { ...a, status: "rejected" as const } : a
-        )
-      );
-      setStats((prev) => ({
-        ...prev,
-        pending: prev.pending - 1,
-        rejected: prev.rejected + 1,
-      }));
-    }
-    setUpdating(null);
-  }
-
-  const currentStatus = TABS.find((t) => t.key === activeTab)?.status ?? "pending";
-  const filtered = applications.filter((a) => a.status === currentStatus);
+  const draggable = !isMobile;
+  const visibleColumns =
+    filter === "all"
+      ? COLUMNS
+      : COLUMNS.filter((c) => c.stage === filter);
+  const visibleItems =
+    filter === "all" ? items : items.filter((i) => i.stage === filter);
 
   return (
     <div>
       {/* Header */}
-      <div className="mb-7">
-        <h1 className="text-2xl font-bold text-[#F5F5F0]">Applications</h1>
-        <p className="text-[13px] text-[rgba(245,245,240,0.45)] mt-1">
-          Review and manage membership applications
-        </p>
+      <div className="mb-1">
+        <h1 className="text-[22px] font-bold leading-tight text-[#F5F5F0]">
+          Pipeline
+        </h1>
       </div>
+      <p className="text-[13px] text-[rgba(245,245,240,0.45)] mb-5">
+        Every person in one place — applicants, garage pass, each membership
+        tier, partners.
+      </p>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-4 gap-3 mb-7">
-        <StatCard label="Pending" value={stats.pending} loading={loading} />
-        <StatCard
-          label="Approved this week"
-          value={stats.approvedThisWeek}
-          loading={loading}
-        />
-        <StatCard label="Rejected" value={stats.rejected} loading={loading} />
-        <StatCard label="Total" value={stats.total} loading={loading} />
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-lg p-1 inline-flex gap-1 mb-5">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-md text-[12px] font-medium transition-all duration-150 ${
-              activeTab === tab.key
-                ? "bg-[rgba(201,168,76,0.15)] text-[#C9A84C]"
-                : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Application cards */}
-      {loading ? (
-        <div className="flex flex-col gap-2">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-xl p-5 h-24 animate-pulse"
-            />
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3.5 mb-5">
+        <div className="inline-flex rounded-lg border border-[rgba(255,255,255,0.07)] overflow-hidden">
+          {(["board", "table"] as ViewMode[]).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              className={`px-4 py-2.5 text-[12px] font-semibold capitalize transition-colors ${
+                view === v
+                  ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C]"
+                  : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              }`}
+            >
+              {v}
+            </button>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="bg-[#111111] border border-[rgba(255,255,255,0.06)] rounded-xl p-12 text-center">
-          <p className="text-[rgba(245,245,240,0.45)] text-sm">
-            No {currentStatus} applications found.
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {filtered.map((app) => (
-            <ApplicationCard
-              key={app.id}
-              app={app}
-              onPreApprove={handlePreApprove}
-              onReject={handleReject}
-              updating={updating}
-            />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] tracking-[1px] uppercase text-[rgba(245,245,240,0.25)] mr-0.5">
+            Type
+          </span>
+          {FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.5px] transition-colors ${
+                filter === f.key
+                  ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C] border-[rgba(201,168,76,0.35)]"
+                  : "border-[rgba(255,255,255,0.07)] text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+              }`}
+            >
+              {f.label}
+            </button>
           ))}
+        </div>
+      </div>
+
+      {moveError && (
+        <div className="mb-4 rounded-lg border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.1)] px-3.5 py-2.5 text-[12px] leading-relaxed text-[#ef8c8c]">
+          {moveError}
         </div>
       )}
+
+      {/* Loading */}
+      {loading ? (
+        <div className="flex gap-3 overflow-hidden">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="w-[230px] h-[440px] rounded-2xl bg-[#111111] border border-[rgba(255,255,255,0.06)] animate-pulse"
+            />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111111] p-12 text-center">
+          <p className="text-[13px] text-[rgba(245,245,240,0.45)] mb-4">
+            {error}
+          </p>
+          <button
+            type="button"
+            onClick={fetchPipeline}
+            className="rounded-lg border border-[rgba(255,255,255,0.07)] px-5 py-2 text-[12px] font-semibold text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+          >
+            Retry
+          </button>
+        </div>
+      ) : view === "board" ? (
+        /* BOARD */
+        <div className="flex gap-3 overflow-x-auto pb-2.5">
+          {visibleColumns.map((col) => {
+            const colItems = items.filter((i) => i.stage === col.stage);
+            return (
+              <div
+                key={col.stage}
+                onDragOver={(e) => {
+                  if (draggable) e.preventDefault();
+                }}
+                onDrop={() => onDrop(col.stage)}
+                className="w-[230px] flex-none min-h-[440px] rounded-2xl border border-[rgba(255,255,255,0.07)] bg-[#111111] p-3.5"
+              >
+                <div className="flex items-center justify-between mb-3 pb-2.5 border-b border-[rgba(255,255,255,0.07)]">
+                  <span
+                    className="text-[11px] font-semibold tracking-[1.2px] uppercase"
+                    style={{ color: col.color }}
+                  >
+                    ● {col.label}
+                  </span>
+                  <span className="text-[11px] font-bold text-[rgba(245,245,240,0.25)]">
+                    {colItems.length}
+                  </span>
+                </div>
+
+                {colItems.length === 0 ? (
+                  <div className="py-7 text-center text-[11px] italic text-[rgba(245,245,240,0.25)]">
+                    Nothing here yet
+                  </div>
+                ) : (
+                  colItems.map((item) => {
+                    const canDrag = draggable && item.type !== "partner";
+                    return (
+                      <div
+                        key={item.id}
+                        draggable={canDrag}
+                        onDragStart={() => setDragId(item.id)}
+                        onDragEnd={() => setDragId(null)}
+                        onClick={() => setDrawer(toTarget(item))}
+                        className={`mb-2 rounded-[10px] border border-[rgba(255,255,255,0.07)] bg-[#171717] p-3 transition-all hover:border-[rgba(201,168,76,0.35)] hover:-translate-y-px ${
+                          canDrag ? "cursor-grab" : "cursor-pointer"
+                        }`}
+                      >
+                        <div className="text-[13px] font-semibold text-[#F5F5F0] mb-0.5">
+                          {item.name}
+                        </div>
+                        <div className="text-[11px] text-[rgba(245,245,240,0.45)] truncate">
+                          {item.email || item.subtitle}
+                        </div>
+                        <span className="inline-block mt-1.5 rounded bg-[rgba(201,168,76,0.14)] px-1.5 py-1 text-[9px] font-semibold tracking-[1px] text-[#C9A84C]">
+                          {item.subtitle.toUpperCase()}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* TABLE */
+        <div className="overflow-x-auto rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#111111]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {["Name", "Type", "Tier / Status", "Email", "Since"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="text-left text-[10px] tracking-[1.5px] uppercase text-[rgba(245,245,240,0.25)] px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] font-semibold"
+                    >
+                      {h}
+                    </th>
+                  )
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {visibleItems.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-3.5 py-12 text-center text-[13px] text-[rgba(245,245,240,0.45)]"
+                  >
+                    No matching people.
+                  </td>
+                </tr>
+              ) : (
+                visibleItems.map((item) => (
+                  <tr
+                    key={item.id}
+                    onClick={() => setDrawer(toTarget(item))}
+                    className="cursor-pointer hover:bg-[rgba(201,168,76,0.05)]"
+                  >
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] font-semibold text-[#F5F5F0]">
+                      {item.name}
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px]">
+                      <span
+                        className="inline-block rounded-full bg-[rgba(255,255,255,0.06)] px-2 py-1 text-[10px] font-semibold tracking-[0.5px]"
+                        style={{ color: STAGE_COLOR[item.stage] }}
+                      >
+                        {STAGE_LABEL[item.stage]}
+                      </span>
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.7)]">
+                      {item.subtitle}
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.7)]">
+                      {item.email || "—"}
+                    </td>
+                    <td className="px-3.5 py-3 border-b border-[rgba(255,255,255,0.07)] text-[13px] text-[rgba(245,245,240,0.45)]">
+                      {shortDate(item.createdAt)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <PersonDrawer
+        target={drawer}
+        onClose={() => setDrawer(null)}
+        onChanged={fetchPipeline}
+      />
     </div>
   );
 }

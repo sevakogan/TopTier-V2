@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTMC Admin v3 — Pipeline (8-col + table)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0A0A0A;--panel:#111;--line:rgba(255,255,255,.07);--gold:#C9A84C;--txt:#F5F5F0;--mut:rgba(245,245,240,.45);--mut2:rgba(245,245,240,.25)}
+body{background:var(--bg);color:var(--txt);font:14px/1.5 system-ui,-apple-system,sans-serif}
+.app{display:flex;min-height:100vh}
+.side{width:200px;border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px;flex:none}
+.brand{font:700 13px/1 system-ui;letter-spacing:4px;color:var(--gold);padding:6px 10px 18px}
+.nav{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--mut);cursor:pointer;font-weight:500}
+.nav:hover{background:rgba(255,255,255,.04);color:var(--txt)}
+.nav.on{background:rgba(201,168,76,.12);color:var(--gold)}
+.nav .b{margin-left:auto;background:var(--gold);color:#000;font:700 11px/1;padding:3px 7px;border-radius:99px}
+.sub{margin-top:auto;font-size:11px;color:var(--mut2);padding:10px}
+.main{flex:1;padding:24px 28px;min-width:0}
+.ph{margin-bottom:6px;font:700 22px/1.2 system-ui}
+.psub{color:var(--mut);font-size:13px;margin-bottom:18px}
+/* toolbar: view toggle + type filter (works on BOTH views) */
+.bar{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--mut);font:600 12px/1;padding:9px 16px;cursor:pointer}
+.seg button.on{background:rgba(201,168,76,.14);color:var(--gold)}
+.filt{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.chip{font:600 11px/1;letter-spacing:.5px;padding:7px 12px;border:1px solid var(--line);border-radius:99px;color:var(--mut);cursor:pointer}
+.chip.on{background:rgba(201,168,76,.14);color:var(--gold);border-color:rgba(201,168,76,.35)}
+.flabel{font-size:11px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase;margin-right:2px}
+/* board: 8 columns, horizontal scroll */
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px;width:230px;flex:none;min-height:440px}
+.colh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.colh .t{font:600 11px/1;letter-spacing:1.2px;text-transform:uppercase}
+.colh .c{font:700 11px/1;color:var(--mut2)}
+.New{color:#eab308}.Review{color:#3b82f6}.Garage{color:#9aa0a6}.Core{color:#C9A84C}.VIP{color:#a855f7}.Strategic{color:#22c55e}.Partners{color:#06b6d4}.Declined{color:#ef4444}
+.card{background:#171717;border:1px solid var(--line);border-radius:10px;padding:11px;margin-bottom:8px;cursor:grab;transition:.12s}
+.card:hover{border-color:rgba(201,168,76,.35);transform:translateY(-1px)}
+.card .nm{font-weight:600;font-size:13px;margin-bottom:2px}
+.card .meta{font-size:11px;color:var(--mut)}
+.card .tag{display:inline-block;margin-top:7px;font:600 9px/1;letter-spacing:1px;padding:3px 6px;border-radius:4px;background:rgba(201,168,76,.14);color:var(--gold)}
+.empty{color:var(--mut2);font-size:11px;text-align:center;padding:26px 0;font-style:italic}
+/* table view */
+.tbl{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tbl th{text-align:left;font:600 10px/1;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut2);padding:13px 14px;border-bottom:1px solid var(--line)}
+.tbl td{padding:13px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tr{cursor:pointer}
+.tbl tbody tr:hover{background:rgba(201,168,76,.05)}
+.pill{display:inline-block;font:600 10px/1;letter-spacing:.5px;padding:4px 8px;border-radius:99px;background:rgba(255,255,255,.06);color:var(--mut)}
+.note{margin-top:22px;padding:14px 16px;border:1px dashed rgba(201,168,76,.3);border-radius:10px;color:var(--mut);font-size:12px;line-height:1.7}
+.hide{display:none}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:40}.scrim.show{display:block}
+.draw{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:#0d0d0d;border-left:1px solid var(--line);transform:translateX(100%);transition:.25s;z-index:50;overflow-y:auto;padding:26px}.draw.show{transform:translateX(0)}
+.dx{float:right;color:var(--mut);cursor:pointer;font-size:20px}.dx:hover{color:var(--txt)}
+.dnm{font:700 22px/1.2 system-ui;margin-bottom:2px}.dml{color:var(--mut);font-size:13px;margin-bottom:16px}
+.sec{border-top:1px solid var(--line);padding:15px 0}.sec h4{font:600 10px/1;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:9px}
+.kv{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}.kv span:first-child{color:var(--mut)}
+.acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.btn{padding:9px 14px;border-radius:8px;font:600 12px/1;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--mut)}
+.btn:hover{color:var(--txt);border-color:rgba(255,255,255,.2)}.btn.go{background:#22c55e;color:#fff;border:0}.btn.no{border-color:rgba(239,68,68,.35);color:#ef4444}.btn.gold{background:var(--gold);color:#000;border:0}
+.carbox{background:#171717;border:1px solid var(--line);border-radius:10px;height:110px;display:flex;align-items:center;justify-content:center;color:var(--mut2);font-size:12px;margin-top:6px}
+@media(max-width:760px){.side{width:58px}.nav span,.brand,.sub{display:none}.main{padding:16px}.col{width:200px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">TTMC</div>
+    <div class="nav on"><span>Pipeline</span><span class="b">2</span></div>
+    <div class="nav"><span>Events</span></div>
+    <div class="sub">Signed in<br>seva@thelevelteam.com</div>
+  </aside>
+
+  <main class="main">
+    <div class="ph">Pipeline</div>
+    <div class="psub">Every person in one place — applicants, garage pass, each membership tier, partners. One surface, two views.</div>
+
+    <div class="bar">
+      <div class="seg">
+        <button class="on" id="bBoard" onclick="setView('board')">Board</button>
+        <button id="bTable" onclick="setView('table')">Table</button>
+      </div>
+      <div class="filt">
+        <span class="flabel">Type</span>
+        <span class="chip on" data-f="all" onclick="setFilter(this)">All</span>
+        <span class="chip" data-f="New" onclick="setFilter(this)">New</span>
+        <span class="chip" data-f="Review" onclick="setFilter(this)">In Review</span>
+        <span class="chip" data-f="Garage" onclick="setFilter(this)">Garage</span>
+        <span class="chip" data-f="Core" onclick="setFilter(this)">Core</span>
+        <span class="chip" data-f="VIP" onclick="setFilter(this)">VIP</span>
+        <span class="chip" data-f="Strategic" onclick="setFilter(this)">Strategic</span>
+        <span class="chip" data-f="Partners" onclick="setFilter(this)">Partners</span>
+        <span class="chip" data-f="Declined" onclick="setFilter(this)">Declined</span>
+      </div>
+    </div>
+
+    <!-- BOARD VIEW -->
+    <div id="board" class="board">
+      <div class="col" data-col="New">
+        <div class="colh"><span class="t New">● New</span><span class="c">2</span></div>
+        <div class="card" onclick="openP('Alex Gunnar','alex@ovotalent.com','Applied · Core · 2024 GT3','New')"><div class="nm">Alex Gunnar</div><div class="meta">alex@ovotalent.com</div><div class="tag">CORE · 2024 GT3</div></div>
+        <div class="card" onclick="openP('Vas Kostiuk','Vaskostiuk@gmail.com','Applied · Core','New')"><div class="nm">Vas Kostiuk</div><div class="meta">Vaskostiuk@gmail.com</div><div class="tag">CORE</div></div>
+      </div>
+      <div class="col" data-col="Review">
+        <div class="colh"><span class="t Review">● In Review</span><span class="c">0</span></div>
+        <div class="empty">Drag here while<br>you decide</div>
+      </div>
+      <div class="col" data-col="Garage">
+        <div class="colh"><span class="t Garage">● Garage Membership</span><span class="c">14</span></div>
+        <div class="card" onclick="openP('R. Soto','rsoto@x.com','Garage Pass · free','Garage')"><div class="nm">R. Soto</div><div class="meta">Garage Pass</div></div>
+        <div class="card" onclick="openP('K. Ng','kn@x.com','Garage Pass · free','Garage')"><div class="nm">K. Ng</div><div class="meta">Garage Pass</div></div>
+        <div class="card"><div class="nm">+ 12 more</div><div class="meta">free signups</div></div>
+      </div>
+      <div class="col" data-col="Core">
+        <div class="colh"><span class="t Core">● Core</span><span class="c">2</span></div>
+        <div class="card" onclick="openP('D. Kostas','—','Core · Active','Core')"><div class="nm">D. Kostas</div><div class="meta">Core · $700/yr</div><div class="tag">ACTIVE</div></div>
+        <div class="card" onclick="openP('P. Vega','—','Core · Active','Core')"><div class="nm">P. Vega</div><div class="meta">Core · $700/yr</div><div class="tag">ACTIVE</div></div>
+      </div>
+      <div class="col" data-col="VIP">
+        <div class="colh"><span class="t VIP">● VIP</span><span class="c">1</span></div>
+        <div class="card" onclick="openP('M. Chen','—','VIP · Active','VIP')"><div class="nm">M. Chen</div><div class="meta">VIP · $3,000/yr</div><div class="tag">ACTIVE</div></div>
+      </div>
+      <div class="col" data-col="Strategic">
+        <div class="colh"><span class="t Strategic">● Strategic Circle</span><span class="c">2</span></div>
+        <div class="card" onclick="openP('J. Rivera','—','Strategic · Active','Strategic')"><div class="nm">J. Rivera</div><div class="meta">Strategic · $6,000/yr</div><div class="tag">ACTIVE</div></div>
+        <div class="card" onclick="openP('A. Belov','—','Strategic · Active','Strategic')"><div class="nm">A. Belov</div><div class="meta">Strategic · $6,000/yr</div><div class="tag">ACTIVE</div></div>
+      </div>
+      <div class="col" data-col="Partners">
+        <div class="colh"><span class="t Partners">● Partners</span><span class="c">0</span></div>
+        <div class="empty">No partners yet<br>+ Add a partner</div>
+      </div>
+      <div class="col" data-col="Declined">
+        <div class="colh"><span class="t Declined">● Declined</span><span class="c">2</span></div>
+        <div class="card" onclick="openP('Hidden A','—','Declined','Declined')"><div class="nm">— hidden —</div><div class="meta">click to view</div></div>
+      </div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <table id="table" class="tbl hide">
+      <thead><tr><th>Name</th><th>Type</th><th>Tier / Status</th><th>Email</th><th>Car</th><th>Since</th></tr></thead>
+      <tbody>
+        <tr data-row="New" onclick="openP('Alex Gunnar','alex@ovotalent.com','Applied · Core','New')"><td><b>Alex Gunnar</b></td><td><span class="pill" style="color:#eab308">New</span></td><td>Core (applied)</td><td>alex@ovotalent.com</td><td>2024 GT3</td><td>2d ago</td></tr>
+        <tr data-row="New" onclick="openP('Vas Kostiuk','Vaskostiuk@gmail.com','Applied · Core','New')"><td><b>Vas Kostiuk</b></td><td><span class="pill" style="color:#eab308">New</span></td><td>Core (applied)</td><td>Vaskostiuk@gmail.com</td><td>—</td><td>3d ago</td></tr>
+        <tr data-row="Strategic" onclick="openP('J. Rivera','—','Strategic · Active','Strategic')"><td><b>J. Rivera</b></td><td><span class="pill" style="color:#22c55e">Strategic</span></td><td>Active</td><td>—</td><td>—</td><td>Jan</td></tr>
+        <tr data-row="VIP" onclick="openP('M. Chen','—','VIP · Active','VIP')"><td><b>M. Chen</b></td><td><span class="pill" style="color:#a855f7">VIP</span></td><td>Active</td><td>—</td><td>—</td><td>Feb</td></tr>
+        <tr data-row="Core" onclick="openP('D. Kostas','—','Core · Active','Core')"><td><b>D. Kostas</b></td><td><span class="pill" style="color:#C9A84C">Core</span></td><td>Active</td><td>—</td><td>—</td><td>Mar</td></tr>
+        <tr data-row="Garage" onclick="openP('R. Soto','rsoto@x.com','Garage Pass','Garage')"><td><b>R. Soto</b></td><td><span class="pill">Garage</span></td><td>Free pass</td><td>rsoto@x.com</td><td>—</td><td>Apr</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note"><b>One surface, two views, one filter.</b> Board = "what needs action / where is everyone." Table = "find &amp; scan." The <b>Type</b> filter applies to both — click <i>VIP</i> and the board hides every other column / the table hides every other row. Drag a card between columns on desktop; tap a card → drawer with actions on mobile. Members &amp; Partners no longer live on separate screens — they're columns here.</div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeP()"></div>
+<aside class="draw" id="draw">
+  <span class="dx" onclick="closeP()">✕</span>
+  <div class="dnm" id="dnm">—</div>
+  <div class="dml" id="dml">—</div>
+  <div class="acts">
+    <button class="btn go">→ In Review</button>
+    <button class="btn gold">✓ Approve</button>
+    <button class="btn">Change tier</button>
+    <button class="btn no">Decline</button>
+  </div>
+
+  <div class="sec"><h4>Contact</h4>
+    <div class="kv"><span>Full name</span><b id="de_name">—</b></div>
+    <div class="kv"><span>Email</span><b id="de">—</b></div>
+    <div class="kv"><span>Phone</span><b>+1 (305) 555-0182</b></div>
+    <div class="kv"><span>Instagram</span><b>@ovotalent</b></div>
+    <div class="kv"><span>Age</span><b>34</b></div>
+    <div class="kv"><span>City</span><b>Miami, FL</b></div>
+    <div class="kv"><span>Referred by</span><b>Member · J. Rivera</b></div>
+  </div>
+
+  <div class="sec"><h4>Application / Status</h4>
+    <div class="kv"><span>Stage</span><b id="dt">—</b></div>
+    <div class="kv"><span>Tier applied / held</span><b>Core — $700/yr</b></div>
+    <div class="kv"><span>Membership status</span><b>—</b></div>
+    <div class="kv"><span>Submitted</span><b>2 days ago</b></div>
+    <div class="kv"><span>Started</span><b>—</b></div>
+    <div class="kv"><span>Renews / expires</span><b>—</b></div>
+    <div class="kv"><span>Waiver accepted</span><b>—</b></div>
+    <div class="kv"><span>Invite token</span><b>—</b></div>
+  </div>
+
+  <div class="sec"><h4>Billing</h4>
+    <div class="kv"><span>Stripe customer</span><b>—</b></div>
+    <div class="kv"><span>Subscription</span><b>—</b></div>
+    <div class="kv"><span>Paid status</span><b>—</b></div>
+  </div>
+
+  <div class="sec"><h4>Their garage</h4>
+    <div class="kv"><span>Car</span><b>2024 Porsche 911 GT3</b></div>
+    <div class="kv"><span>Plate</span><b>FL · TTMC01</b></div>
+    <div class="kv"><span>Mods</span><b>Akrapovič, BBS, lowered</b></div>
+    <div class="kv"><span>Verification</span><b>Pending review</b></div>
+    <div class="carbox">📷 all uploaded car photos</div>
+  </div>
+
+  <div class="sec" id="partnerSec"><h4>Partner deal (if partner)</h4>
+    <div class="kv"><span>Category</span><b>—</b></div>
+    <div class="kv"><span>Discount code</span><b>—</b></div>
+    <div class="kv"><span>Visibility tier</span><b>—</b></div>
+    <div class="kv"><span>Pay link</span><b>—</b></div>
+    <div class="carbox">📷 partner-submitted media / offers</div>
+  </div>
+
+  <div class="sec"><h4>Admin notes</h4>
+    <div style="color:var(--mut);font-size:13px;border:1px solid var(--line);border-radius:8px;padding:10px;min-height:54px">Private — staff only. Editable inline.</div>
+  </div>
+
+  <div class="sec" style="border-bottom:1px solid var(--line)"><h4>Activity</h4>
+    <div class="kv"><span>Created</span><b>Apr 12, 2026</b></div>
+    <div class="kv"><span>Last login</span><b>3 days ago</b></div>
+    <div class="kv"><span>Last status change</span><b>by you · 2 days ago</b></div>
+  </div>
+</aside>
+
+<script>
+function setView(v){
+  var board=document.getElementById('board'),table=document.getElementById('table');
+  document.getElementById('bBoard').classList.toggle('on',v==='board');
+  document.getElementById('bTable').classList.toggle('on',v==='table');
+  board.classList.toggle('hide',v!=='board');
+  table.classList.toggle('hide',v!=='table');
+}
+function setFilter(el){
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on')});
+  el.classList.add('on');
+  var f=el.getAttribute('data-f');
+  document.querySelectorAll('#board .col').forEach(function(c){
+    c.style.display=(f==='all'||c.getAttribute('data-col')===f)?'':'none';
+  });
+  document.querySelectorAll('#table tbody tr').forEach(function(r){
+    r.style.display=(f==='all'||r.getAttribute('data-row')===f)?'':'none';
+  });
+}
+function openP(n,e,sub){
+  document.getElementById('dnm').textContent=n;
+  document.getElementById('dml').textContent=sub;
+  document.getElementById('de').textContent=e;
+  document.getElementById('de_name').textContent=n;
+  document.getElementById('dt').textContent=sub;
+  document.getElementById('scrim').classList.add('show');
+  document.getElementById('draw').classList.add('show');
+}
+function closeP(){
+  document.getElementById('scrim').classList.remove('show');
+  document.getElementById('draw').classList.remove('show');
+}
+</script>
+</body>
+</html>

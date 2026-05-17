@@ -11,14 +11,8 @@ type UserInfo = {
 };
 
 const MANAGEMENT_LINKS = [
-  { href: "/admin", label: "Applications", icon: "📋", showBadge: true },
-  { href: "/admin/members", label: "Members", icon: "👥", showBadge: false },
+  { href: "/admin", label: "Pipeline", icon: "📊", showBadge: true },
   { href: "/admin/events", label: "Events", icon: "📅", showBadge: false },
-  { href: "/admin/partners", label: "Partners", icon: "🤝", showBadge: false },
-];
-
-const SETTINGS_LINKS = [
-  { href: "/admin/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export function AdminSidebar() {
@@ -28,38 +22,64 @@ export function AdminSidebar() {
   const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
+    let active = true;
+
     async function loadData() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        setUser({
-          name: session.user.user_metadata?.full_name ?? "Admin",
-          email: session.user.email ?? "",
+        if (!active) return;
+
+        if (session?.user) {
+          setUser({
+            name: session.user.user_metadata?.full_name ?? "Admin",
+            email: session.user.email ?? "",
+          });
+        }
+
+        const token = session?.access_token;
+        if (!token) return;
+
+        const res = await fetch("/api/admin/pipeline", {
+          headers: { Authorization: `Bearer ${token}` },
         });
+        if (!res.ok) return;
+
+        const payload = (await res.json()) as {
+          items?: { stage: string }[];
+        };
+        if (!active) return;
+
+        const newCount = (payload.items ?? []).filter(
+          (i) => i.stage === "New"
+        ).length;
+        setPendingCount(newCount);
+      } catch {
+        // Silent — badge simply stays hidden.
       }
-
-      const { count } = await supabase
-        .from("applications")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-
-      setPendingCount(count ?? 0);
     }
 
     loadData();
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
 
   function isActive(href: string): boolean {
     if (href === "/admin") {
-      return pathname === "/admin" || pathname.startsWith("/admin/applications");
+      return pathname === "/admin";
     }
     return pathname.startsWith(href);
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // Ignore — still navigate away.
+    }
     router.push("/");
   }
 
@@ -100,30 +120,6 @@ export function AdminSidebar() {
                     {pendingCount}
                   </span>
                 )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Settings section */}
-        <div className="text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] px-2 mt-6 mb-2">
-          SETTINGS
-        </div>
-        <nav className="flex flex-col gap-0.5">
-          {SETTINGS_LINKS.map((link) => {
-            const active = pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
-                  active
-                    ? "bg-[rgba(201,168,76,0.1)] text-[#C9A84C]"
-                    : "text-[rgba(245,245,240,0.45)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F5F0]"
-                }`}
-              >
-                <span className="text-sm">{link.icon}</span>
-                <span>{link.label}</span>
               </Link>
             );
           })}
