@@ -4,12 +4,17 @@
 // that gate on the user JWT) plus the verified identity.
 
 import { createClient } from "@supabase/supabase-js";
+import { createServiceClient } from "@/lib/supabase-server";
 
+// Bootstrap allowlist — can't be locked out even if user_roles is empty.
 export const ADMIN_EMAILS = new Set([
   "sevakogan@gmail.com",
   "seva@thelevelteam.com",
   "daotoptiermiami@aol.com",
 ]);
+
+/** Roles that grant V2 admin-panel access. */
+export const ADMIN_ROLES = new Set(["admin", "founder"]);
 
 export interface AdminIdentity {
   token: string;
@@ -33,9 +38,25 @@ export async function requireAdmin(
   const {
     data: { user },
   } = await client.auth.getUser(token);
+  if (!user?.email) return null;
 
-  if (!user?.email || !ADMIN_EMAILS.has(user.email)) return null;
-  return { token, userId: user.id, email: user.email };
+  // Allowed via bootstrap allowlist OR an admin/founder role grant
+  // (managed in the Roles & Users screen).
+  if (ADMIN_EMAILS.has(user.email))
+    return { token, userId: user.id, email: user.email };
+
+  try {
+    const db = createServiceClient();
+    const { data } = await db
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id);
+    if ((data ?? []).some((r) => ADMIN_ROLES.has(r.role as string)))
+      return { token, userId: user.id, email: user.email };
+  } catch {
+    // role check failed → fall through to deny
+  }
+  return null;
 }
 
 /** Plan-name → membership tier (mirrors V1 PLAN_TO_TIER, by name). */

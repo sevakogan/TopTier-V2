@@ -7,11 +7,6 @@ import { AdminDataProvider } from "@/components/admin/admin-data";
 import { AdminChromeProvider } from "@/components/admin/admin-chrome";
 import { AdminShell } from "@/components/admin/admin-shell";
 
-const ADMIN_EMAILS = [
-  "sevakogan@gmail.com",
-  "seva@thelevelteam.com",
-  "daotoptiermiami@aol.com",
-];
 
 export default function AdminLayout({
   children,
@@ -47,10 +42,16 @@ export default function AdminLayout({
         return;
       }
 
-      const email = session.user.email;
-      if (email && ADMIN_EMAILS.includes(email)) {
-        setAuthorized(true);
-      } else {
+      // Unified gate: allowlist OR admin/founder role (server-decided).
+      try {
+        const res = await fetch("/api/admin/me", {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+        if (res.ok) setAuthorized(true);
+        else setDenied(true);
+      } catch {
         setDenied(true);
       }
       resolved.current = true;

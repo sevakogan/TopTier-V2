@@ -39,6 +39,12 @@ const MANAGEMENT_LINKS = [
     icon: "💳",
     showBadge: false,
   },
+  {
+    href: "/admin/roles",
+    label: "Team & Roles",
+    icon: "🛡️",
+    showBadge: false,
+  },
 ];
 
 function AdminSidebarInner() {
