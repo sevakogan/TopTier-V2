@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { AdminDataProvider } from "@/components/admin/admin-data";
+import { AdminChromeProvider } from "@/components/admin/admin-chrome";
+import { AdminShell } from "@/components/admin/admin-shell";
 
 const ADMIN_EMAILS = [
   "sevakogan@gmail.com",
@@ -22,6 +23,9 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [denied, setDenied] = useState(false);
+  // Once auth resolves we never show the full-screen loader again, so
+  // client navigation can never blank the shell.
+  const resolved = useRef(false);
 
   const isPublicRoute =
     pathname.includes("/login") || pathname.includes("/callback");
@@ -49,6 +53,7 @@ export default function AdminLayout({
       } else {
         setDenied(true);
       }
+      resolved.current = true;
       setLoading(false);
     }
 
@@ -69,7 +74,7 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
-  if (loading) {
+  if (loading && !resolved.current) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0A0A0A]">
         <div className="text-center">
@@ -111,11 +116,10 @@ export default function AdminLayout({
   if (!authorized) return null;
 
   return (
-    <AdminDataProvider>
-      <div className="flex min-h-screen bg-[#0A0A0A] font-sans">
-        <AdminSidebar />
-        <main className="flex-1 ml-[240px] p-8">{children}</main>
-      </div>
-    </AdminDataProvider>
+    <AdminChromeProvider>
+      <AdminDataProvider>
+        <AdminShell>{children}</AdminShell>
+      </AdminDataProvider>
+    </AdminChromeProvider>
   );
 }
