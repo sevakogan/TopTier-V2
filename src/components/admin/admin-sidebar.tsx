@@ -40,6 +40,12 @@ const MANAGEMENT_LINKS = [
     showBadge: false,
   },
   {
+    href: "/admin/intake",
+    label: "Intake Questions",
+    icon: "📝",
+    showBadge: false,
+  },
+  {
     href: "/admin/roles",
     label: "Team & Roles",
     icon: "🛡️",
