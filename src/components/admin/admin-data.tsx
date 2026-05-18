@@ -10,6 +10,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -155,10 +156,16 @@ export function AdminDataProvider({
     };
   }, [refetch]);
 
+  // Stable identity: only changes when pipeline data actually changes,
+  // NOT on every parent (layout/pathname) re-render — so the sidebar
+  // never churns when you switch tabs.
+  const value = useMemo(
+    () => ({ items, loading, error, refetch, getPerson, loadPerson }),
+    [items, loading, error, refetch, getPerson, loadPerson]
+  );
+
   return (
-    <AdminPipelineContext.Provider
-      value={{ items, loading, error, refetch, getPerson, loadPerson }}
-    >
+    <AdminPipelineContext.Provider value={value}>
       {children}
     </AdminPipelineContext.Provider>
   );

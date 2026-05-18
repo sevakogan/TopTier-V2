@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -41,7 +41,7 @@ const MANAGEMENT_LINKS = [
   },
 ];
 
-export function AdminSidebar() {
+function AdminSidebarInner() {
   const pathname = usePathname();
   const router = useRouter();
   const { items } = useAdminPipeline();
@@ -197,3 +197,8 @@ export function AdminSidebar() {
     </aside>
   );
 }
+
+// No props: memo means the bar re-renders ONLY for its own state
+// (active link / collapse / pipeline badge) — never because the route
+// or page content changed.
+export const AdminSidebar = memo(AdminSidebarInner);
