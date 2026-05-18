@@ -31,10 +31,17 @@ const NAV_GROUPS: { title: string; links: NavLink[] }[] = [
       { href: "/admin/rentals", label: "Rentals", icon: "🔑" },
       { href: "/admin/bookings", label: "Bookings", icon: "📕" },
       { href: "/admin/studio", label: "Studio", icon: "🎬" },
+      { href: "/admin/partners", label: "Partners", icon: "🤝" },
     ],
   },
   {
-    title: "Growth",
+    title: "Finance",
+    links: [
+      { href: "/admin/payments", label: "Payments", icon: "💳" },
+    ],
+  },
+  {
+    title: "Setup",
     links: [
       {
         href: "/admin/invite-codes",
@@ -46,20 +53,8 @@ const NAV_GROUPS: { title: string; links: NavLink[] }[] = [
         label: "Intake Questions",
         icon: "📝",
       },
-      { href: "/admin/partners", label: "Partners", icon: "🤝" },
-    ],
-  },
-  {
-    title: "Finance",
-    links: [
-      { href: "/admin/payments", label: "Payments", icon: "💳" },
-    ],
-  },
-  {
-    title: "Admin",
-    links: [
-      { href: "/admin/navigation", label: "Navigation", icon: "🧭" },
       { href: "/admin/roles", label: "Team & Roles", icon: "🛡️" },
+      { href: "/admin/navigation", label: "Navigation", icon: "🧭" },
     ],
   },
 ];
