@@ -9,53 +9,58 @@ import { useAdminChrome } from "@/components/admin/admin-chrome";
 
 type UserInfo = { name: string; email: string };
 
-const MANAGEMENT_LINKS = [
-  { href: "/admin", label: "Pipeline", icon: "📊", showBadge: true },
-  { href: "/admin/events", label: "Events", icon: "📅", showBadge: false },
-  { href: "/admin/catalog", label: "Catalog", icon: "🚗", showBadge: false },
-  { href: "/admin/studio", label: "Studio", icon: "🎬", showBadge: false },
-  { href: "/admin/rentals", label: "Rentals", icon: "🔑", showBadge: false },
+type NavLink = {
+  href: string;
+  label: string;
+  icon: string;
+  showBadge?: boolean;
+};
+
+const NAV_GROUPS: { title: string; links: NavLink[] }[] = [
   {
-    href: "/admin/bookings",
-    label: "Bookings",
-    icon: "📕",
-    showBadge: false,
+    title: "Pipeline",
+    links: [
+      { href: "/admin", label: "Pipeline", icon: "📊", showBadge: true },
+    ],
   },
   {
-    href: "/admin/invite-codes",
-    label: "Invite Codes",
-    icon: "🎟️",
-    showBadge: false,
+    title: "Operations",
+    links: [
+      { href: "/admin/events", label: "Events", icon: "📅" },
+      { href: "/admin/catalog", label: "Catalog", icon: "🚗" },
+      { href: "/admin/rentals", label: "Rentals", icon: "🔑" },
+      { href: "/admin/bookings", label: "Bookings", icon: "📕" },
+      { href: "/admin/studio", label: "Studio", icon: "🎬" },
+    ],
   },
   {
-    href: "/admin/partners",
-    label: "Partners",
-    icon: "🤝",
-    showBadge: false,
+    title: "Growth",
+    links: [
+      {
+        href: "/admin/invite-codes",
+        label: "Invite Codes",
+        icon: "🎟️",
+      },
+      {
+        href: "/admin/intake",
+        label: "Intake Questions",
+        icon: "📝",
+      },
+      { href: "/admin/partners", label: "Partners", icon: "🤝" },
+    ],
   },
   {
-    href: "/admin/payments",
-    label: "Payments",
-    icon: "💳",
-    showBadge: false,
+    title: "Finance",
+    links: [
+      { href: "/admin/payments", label: "Payments", icon: "💳" },
+    ],
   },
   {
-    href: "/admin/intake",
-    label: "Intake Questions",
-    icon: "📝",
-    showBadge: false,
-  },
-  {
-    href: "/admin/navigation",
-    label: "Navigation",
-    icon: "🧭",
-    showBadge: false,
-  },
-  {
-    href: "/admin/roles",
-    label: "Team & Roles",
-    icon: "🛡️",
-    showBadge: false,
+    title: "Admin",
+    links: [
+      { href: "/admin/navigation", label: "Navigation", icon: "🧭" },
+      { href: "/admin/roles", label: "Team & Roles", icon: "🛡️" },
+    ],
   },
 ];
 
@@ -128,53 +133,65 @@ function AdminSidebarInner() {
         </button>
       </div>
 
-      {/* Nav */}
-      <div className={`flex-1 ${collapsed ? "px-2" : "px-4"}`}>
-        {!collapsed && (
-          <div className="text-[10px] tracking-[2px] text-[rgba(245,245,240,0.25)] px-2 mb-2">
-            MANAGEMENT
-          </div>
-        )}
-        <nav className="flex flex-col gap-0.5">
-          {MANAGEMENT_LINKS.map((link) => {
-            const active = isActive(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                title={collapsed ? link.label : undefined}
-                className={`flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${
-                  collapsed
-                    ? "justify-center px-0 py-2.5"
-                    : "gap-2.5 px-3 py-2.5"
-                } ${
-                  active
-                    ? "bg-[rgba(201,168,76,0.1)] text-[#C9A84C]"
-                    : "text-[rgba(245,245,240,0.45)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F5F0]"
-                }`}
-              >
-                <span className="text-sm relative">
-                  {link.icon}
-                  {collapsed &&
-                    link.showBadge &&
-                    pendingCount > 0 && (
-                      <span className="absolute -top-1.5 -right-2 bg-[#C9A84C] text-[#0A0A0A] rounded-full px-1 text-[9px] font-bold leading-[14px]">
-                        {pendingCount}
-                      </span>
-                    )}
-                </span>
-                {!collapsed && <span>{link.label}</span>}
-                {!collapsed &&
-                  link.showBadge &&
-                  pendingCount > 0 && (
-                    <span className="ml-auto bg-[#C9A84C] text-[#0A0A0A] rounded-full px-2 text-[10px] font-bold leading-[18px]">
-                      {pendingCount}
+      {/* Nav — grouped sections */}
+      <div
+        className={`flex-1 overflow-y-auto ${
+          collapsed ? "px-2" : "px-4"
+        }`}
+      >
+        {NAV_GROUPS.map((group, gi) => (
+          <div key={group.title} className={gi > 0 ? "mt-5" : ""}>
+            {collapsed ? (
+              gi > 0 && (
+                <div className="mx-2 mb-3 border-t border-[rgba(255,255,255,0.06)]" />
+              )
+            ) : (
+              <div className="text-[10px] tracking-[2px] uppercase text-[rgba(245,245,240,0.25)] px-2 mb-2">
+                {group.title}
+              </div>
+            )}
+            <nav className="flex flex-col gap-0.5">
+              {group.links.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    title={collapsed ? link.label : undefined}
+                    className={`flex items-center rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                      collapsed
+                        ? "justify-center px-0 py-2.5"
+                        : "gap-2.5 px-3 py-2.5"
+                    } ${
+                      active
+                        ? "bg-[rgba(201,168,76,0.1)] text-[#C9A84C]"
+                        : "text-[rgba(245,245,240,0.45)] hover:bg-[rgba(255,255,255,0.04)] hover:text-[#F5F5F0]"
+                    }`}
+                  >
+                    <span className="text-sm relative">
+                      {link.icon}
+                      {collapsed &&
+                        link.showBadge &&
+                        pendingCount > 0 && (
+                          <span className="absolute -top-1.5 -right-2 bg-[#C9A84C] text-[#0A0A0A] rounded-full px-1 text-[9px] font-bold leading-[14px]">
+                            {pendingCount}
+                          </span>
+                        )}
                     </span>
-                  )}
-              </Link>
-            );
-          })}
-        </nav>
+                    {!collapsed && <span>{link.label}</span>}
+                    {!collapsed &&
+                      link.showBadge &&
+                      pendingCount > 0 && (
+                        <span className="ml-auto bg-[#C9A84C] text-[#0A0A0A] rounded-full px-2 text-[10px] font-bold leading-[18px]">
+                          {pendingCount}
+                        </span>
+                      )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
       </div>
 
       {/* User + sign out */}
