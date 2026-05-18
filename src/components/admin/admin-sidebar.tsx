@@ -46,6 +46,12 @@ const MANAGEMENT_LINKS = [
     showBadge: false,
   },
   {
+    href: "/admin/navigation",
+    label: "Navigation",
+    icon: "🧭",
+    showBadge: false,
+  },
+  {
     href: "/admin/roles",
     label: "Team & Roles",
     icon: "🛡️",
