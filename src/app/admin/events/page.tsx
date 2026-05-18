@@ -61,6 +61,26 @@ export default function EventsPage() {
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
+  const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
+
+  const now = Date.now();
+  const isPast = (e: EventRow) =>
+    !!e.event_date && new Date(e.event_date).getTime() < now;
+  const upcoming = events
+    .filter((e) => !isPast(e))
+    .sort(
+      (a, b) =>
+        (a.event_date ? new Date(a.event_date).getTime() : Infinity) -
+        (b.event_date ? new Date(b.event_date).getTime() : Infinity)
+    );
+  const past = events
+    .filter(isPast)
+    .sort(
+      (a, b) =>
+        new Date(b.event_date as string).getTime() -
+        new Date(a.event_date as string).getTime()
+    );
+  const visible = tab === "upcoming" ? upcoming : past;
 
   function openNew() {
     setBanner(null);
@@ -154,6 +174,28 @@ export default function EventsPage() {
         listings.
       </p>
 
+      <div className="mb-5 inline-flex rounded-lg border border-[rgba(255,255,255,0.07)] overflow-hidden">
+        {(
+          [
+            ["upcoming", `Upcoming (${upcoming.length})`],
+            ["past", `Past (${past.length})`],
+          ] as [typeof tab, string][]
+        ).map(([k, lbl]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={`px-4 py-2.5 text-[12px] font-semibold transition-colors ${
+              tab === k
+                ? "bg-[rgba(201,168,76,0.14)] text-[#C9A84C]"
+                : "text-[rgba(245,245,240,0.45)] hover:text-[#F5F5F0]"
+            }`}
+          >
+            {lbl}
+          </button>
+        ))}
+      </div>
+
       {(banner || error) && (
         <div className="mb-4 rounded-lg border border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.1)] px-3.5 py-2.5 text-[12px] text-[#ef8c8c]">
           {banner || error}
@@ -169,13 +211,15 @@ export default function EventsPage() {
             />
           ))}
         </div>
-      ) : events.length === 0 ? (
+      ) : visible.length === 0 ? (
         <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[#111111] p-12 text-center text-[13px] text-[rgba(245,245,240,0.45)]">
-          No events yet.
+          {tab === "upcoming"
+            ? "No upcoming events."
+            : "No past events."}
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
-          {events.map((e) => (
+          {visible.map((e) => (
             <div
               key={e.id}
               className="rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#111111] p-4"
